@@ -303,7 +303,7 @@ td select.clubsel{font-size:.8rem}
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v217 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
+      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v218 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
       <div class="titlerow">
         <h1>Golf Analyzer<button type="button" class="qhelp hq" id="appq" aria-label="About Golf Analyzer" data-tip="Reads every export in the Golf Data Google Drive folder (R10 and S72). Upload a new CSV there, then press Sync with Drive.">?</button></h1>
         <div class="syncbox"><button class="primary" id="refresh" type="button">Sync with Drive</button><span class="status" id="status" role="status">Starting…</span></div>
@@ -683,6 +683,9 @@ function renderRail(){
    </div>`;
 }
 document.addEventListener('click',e=>{
+  { const d=e.target.closest('[data-flclub]'); if(d){ const c=d.dataset.flclub, off=S.flOff||(S.flOff=new Set());
+      if(off.has(c)) off.delete(c); else { const vis=[...d.parentElement.querySelectorAll('[data-flclub]')].filter(b=>!off.has(b.dataset.flclub)); if(vis.length>1) off.add(c); }
+      renderFlight(); return; } }
   { const d=e.target.closest('[data-dispclub]'); if(d){ const c=d.dataset.dispclub, off=S.dispOff||(S.dispOff=new Set());
       if(off.has(c)) off.delete(c); else { const vis=[...d.parentElement.querySelectorAll('[data-dispclub]')].filter(b=>!off.has(b.dataset.dispclub)); if(vis.length>1) off.add(c); }
       renderDisp(); return; } }
@@ -761,7 +764,7 @@ document.addEventListener('change',e=>{
     const set=t.dataset.clubchk?[t.dataset.clubchk]:all.filter(c=>clubCat(c)===t.dataset.catchk);
     if(t.checked){ for(const c of set) if(!cur.includes(c)) cur.push(c); } else cur=cur.filter(c=>!set.includes(c));
     if(!cur.length){ t.checked=true; return; }   // keep at least one club
-    S.f.clubs=cur.length<all.length?all.filter(c=>cur.includes(c)):null; S.dispOff=new Set(); if(!swingOn()) S.f.lens=LEN.slice(); saveF(); render(); return; }
+    S.f.clubs=cur.length<all.length?all.filter(c=>cur.includes(c)):null; S.dispOff=new Set(); S.flOff=new Set(); if(!swingOn()) S.f.lens=LEN.slice(); saveF(); render(); return; }
   if(t.id==='f-from'){ S.f.from=(t.value&&t.value!==S.days[0])?t.value:null; if(S.f.to&&S.f.from&&S.f.to<S.f.from) S.f.to=null; saveF(); render(); }
   else if(t.id==='f-to'){ S.f.to=(t.value&&t.value!==S.days[S.days.length-1])?t.value:null; if(S.f.to&&S.f.from&&S.f.to<S.f.from) S.f.from=null; saveF(); render(); }
   else if(t.id==='fix-on'){ S.fixOn=t.checked; store.set('r10:fixOn',S.fixOn); derive(); render(); }
@@ -1346,11 +1349,14 @@ function renderFlight(){
   let flAnim=false; { const box=$('flight'); if(S.anim&&box){ const r=box.getBoundingClientRect(); if(r.top<innerHeight&&r.bottom>0) flAnim=true; else S.flPending=true; } else if(S.flNow){ flAnim=true; } }
   if(!S.flObs&&window.IntersectionObserver&&$('flight')){ S.flObs=new IntersectionObserver(es=>{ for(const e of es) if(e.isIntersecting&&S.flPending){ S.flPending=false; S.flNow=true; renderFlight(); S.flNow=false; } },{threshold:.25}); S.flObs.observe($('flight')); }
   const el=$('flight'); if(!el) return;
-  const sh=filtered().filter(s=>s.carry>0&&s.apex>0).sort((a,b)=>clubCmp(a.club,b.club));
-  const clubs=[...new Set(sh.map(s=>s.club))];
+  // clubs can be switched off here for Ball Flight only; a club change in the top bar resets this
+  const foff=S.flOff||(S.flOff=new Set());
+  const base=filtered().filter(s=>s.carry>0&&s.apex>0).sort((a,b)=>clubCmp(a.club,b.club));
+  const allC=clubOrder().filter(c=>base.some(s=>s.club===c));
+  const sh=base.filter(s=>!foff.has(s.club));
   const lens=LEN.filter(l=>l!=='full'&&sh.some(s=>isWedge(s.club)&&s.len===l));
   const DASH={full:'2 3',half:'7 4',third:'1 4'};
-  $('flight-legend').innerHTML=legendHTML(clubOrder().filter(c=>clubs.includes(c)),lens);
+  $('flight-legend').innerHTML='<div class="lgrow" style="justify-content:flex-start">'+allC.map(c=>`<button type="button" class="lgbtn${foff.has(c)?' off':''}" data-flclub="${esc(c)}" aria-pressed="${!foff.has(c)}" title="${foff.has(c)?'Show':'Hide'} ${esc(c)} in Ball Flight"><span class="swatch" style="background:${colorOf(c)}"></span>${esc(c)}</button>`).join('')+'</div>';
   if(!sh.length){ el.innerHTML='<div class="empty">No shots with carry and apex in the current filter.</div>'; return; }
   const w=W(el), L=40, R=16, T=14, B=30, h=Math.round(Math.min(360,Math.max(230,w*.32)));
   const xmax=Math.ceil((Math.max(...sh.map(s=>s.carry))+5)/10)*10, ymax=Math.ceil(Math.max(...sh.map(s=>s.apex))*1.12+1);
@@ -1371,13 +1377,16 @@ function renderFlight(){
     marks+=`<g class="mk" style="animation-delay:${+dl+700}ms" data-tip="${esc(tip)}" data-sid="${esc(p.id)}"><circle cx="${x(f.xa)}" cy="${y(f.A)}" r="8" fill="transparent"/>${shape(isWedge(p.club)?p.len:'full',x(f.xa),y(f.A),col,false,3.4)}<circle cx="${x(f.C)}" cy="${y(0)}" r="2.4" fill="${col}"/></g>`; }
   $('flight-tog').innerHTML=`<button type="button" class="chip" data-typ="1" aria-pressed="${!!S.showTyp}">Typical Flight</button>`;
   // toggle on: add a solid "typical flight" per club card (median carry, average apex and launch)
-  if(S.showTyp){ for(const g of groupList(filtered())){ const c=median(vals(g.shots,'carry')), A=stat(g.shots,'apex').m; if(!(c>0&&A>0)) continue;
+  if(S.showTyp){ for(const g of groupList(filtered()).filter(g=>!foff.has(g.club))){ const c=median(vals(g.shots,'carry')), A=stat(g.shots,'apex').m; if(!(c>0&&A>0)) continue;
     const L0=stat(g.shots,'launch').m, f=flightShape({carry:c,apex:A,launch:L0}), col=colorOf(g.club), N=24, pts=[];
     for(let i=0;i<=N;i++){ const u=i/N; pts.push([f.xa*u, f.A*(1-(1-u)**2)]); }
     for(let i=1;i<=N;i++){ const u=i/N; pts.push([f.xa+(f.C-f.xa)*u, f.A*(1-u**2)]); }
     const tip=`${g.len==='full'?g.club:glabel(g)} · club card\nMedian carry ${fmt(c)} yds\nApex ${fmt(A)} yds`+(L0!=null?`\nLaunch ${fmt(L0)}°`:'')+`\nEst. landing angle ${fmt(f.land,0)}°\n${g.shots.length} shots`;
     marks+=`<g data-tip="${esc(tip)}"><path d="M${pts.map(([a,b])=>x(a).toFixed(1)+','+y(b).toFixed(1)).join('L')}" fill="none" stroke="var(--panel)" stroke-width="5" stroke-linejoin="round"/><path d="M${pts.map(([a,b])=>x(a).toFixed(1)+','+y(b).toFixed(1)).join('L')}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>`
       +shape(isWedge(g.club)?g.len:'full',x(f.xa),y(f.A),col,false,5.5)+`<circle cx="${x(f.C)}" cy="${y(0)}" r="4" fill="${col}" stroke="var(--panel)" stroke-width="1.5"/></g>`; } }
+  // swing-length key inside the chart, bottom right: 1/2 above, 1/3 at the bottom
+  { const keys=['half','third'].filter(l=>lens.includes(l)); const kx=w-R-38, ky=h-B-5-(keys.length-1)*16;
+    keys.forEach((l,i)=>{ const yy=ky+i*16; marks+=shape(l,kx+4,yy-4,'var(--ink2)',false,4)+`<text x="${kx+16}" y="${yy}" class="tlab">${LENS[l]}</text>`; }); }
   el.innerHTML=s+marks+selMark+'</svg>';
 }
 
@@ -2013,7 +2022,7 @@ const ZH_RULES=[ // whole sentences that carry numbers
   [/now (.+?) · aim (.+?) to (.+)$/g,'目前 $1 · 目標 $2 至 $3'],
   [/(\d+) shots · (\d+) sessions?/g,'$1 球 · $2 次練習'],
   [/Page (\d+) of (\d+)/g,'第 $1 頁，共 $2 頁'],
-  [/Hide (\S+) in Dispersion/g,'在落點分佈隱藏 $1'],[/Show (\S+) in Dispersion/g,'在落點分佈顯示 $1'],
+  [/Hide (\S+) in Dispersion/g,'在落點分佈隱藏 $1'],[/Hide (\S+) in Ball Flight/g,'在球飛行軌跡隱藏 $1'],[/Show (\S+) in Ball Flight/g,'在球飛行軌跡顯示 $1'],[/Show (\S+) in Dispersion/g,'在落點分佈顯示 $1'],
   [/Average of (\d+) swings?/g,'$1 次揮桿的平均'],[/(\d+) matched to R10 shots by time/g,'$1 次依時間對應 R10 擊球'],
   [/(\d+) excluded \(struck through\)/g,'$1 筆已排除（刪除線）'],
   [/(\d+) shots in the current filter/g,'目前篩選中有 $1 球'],[/(\d+) S72 swings in the current filter/g,'目前篩選中有 $1 次 S72 揮桿'],
