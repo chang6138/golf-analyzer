@@ -135,7 +135,9 @@ section.card.collapsed{gap:0}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 .selq{display:inline-flex;align-items:center;gap:6px;min-width:0}.selq select{min-width:0}
 .cardfoot{display:flex;justify-content:flex-end}
-.progfoot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:10px 16px}.progctl{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px;margin-left:auto}
+.progfoot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:10px 16px}
+.progfoot.flfoot{display:grid;grid-template-columns:1fr auto 1fr;align-items:center}.flfoot>.progctl{justify-self:end}
+@media (max-width:560px){.progfoot.flfoot{grid-template-columns:1fr}.flfoot>span{display:none}.flfoot>.progctl{justify-self:center}}.progctl{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px;margin-left:auto}
 .subhid{display:none!important}.qhelp.hq{margin-left:8px;vertical-align:middle;font-family:var(--f-body);position:relative;top:-2px}
 .qhelp{width:24px;height:24px;padding:0;border-radius:50%;font-weight:600;font-size:.8rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:none}
 .apath{display:flex;flex-direction:column;gap:14px}.cimp{display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--line);padding-top:14px}.cimphd{display:flex;flex-direction:column;gap:4px}.cimp .inner{background:var(--panel)}.cimp .inner .tbox{background:var(--panel2)}.tstat b{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:3px}@media (max-width:760px){.cimp .inner{padding:10px}.cimp svg text.tlab{font-size:18px}}.ctop2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 24px;align-items:center;border-top:1px solid var(--line);padding-top:14px}.ctop2>.eyebrow{grid-column:1 / -1}.ctop2 svg{max-width:460px;width:100%;display:block;margin:0 auto}.cinfo{display:flex;flex-direction:column;gap:10px;min-width:0}.ctop2 .tshape{font-size:.95rem}
@@ -276,8 +278,7 @@ td select.clubsel{font-size:.8rem}
   @keyframes a-swing{from{opacity:0;transform:translateX(-46px)}to{opacity:1;transform:none}}
   @keyframes a-draw{from{stroke-dashoffset:600}to{stroke-dashoffset:0}}
   @keyframes a-fly{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
-  svg.a-fl path.fl{animation:a-fly .8s cubic-bezier(.25,.6,.3,1) both}
-  svg.a-fl g.mk{transform-box:fill-box;transform-origin:center;animation:a-pop .35s ease-out both}
+    svg.a-fl g.mk.pop{transform-box:fill-box;transform-origin:center;animation:a-pop .35s ease-out both}
   main>section.card,body section.card{animation:a-rise .55s cubic-bezier(.2,.7,.2,1) both}
   section.card:nth-of-type(2){animation-delay:.06s}section.card:nth-of-type(3){animation-delay:.12s}section.card:nth-of-type(4){animation-delay:.18s}section.card:nth-of-type(5){animation-delay:.24s}section.card:nth-of-type(n+6){animation-delay:.3s}
   header.top{animation:a-fade .5s ease-out both}
@@ -303,7 +304,7 @@ td select.clubsel{font-size:.8rem}
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v218 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
+      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v219 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
       <div class="titlerow">
         <h1>Golf Analyzer<button type="button" class="qhelp hq" id="appq" aria-label="About Golf Analyzer" data-tip="Reads every export in the Golf Data Google Drive folder (R10 and S72). Upload a new CSV there, then press Sync with Drive.">?</button></h1>
         <div class="syncbox"><button class="primary" id="refresh" type="button">Sync with Drive</button><span class="status" id="status" role="status">Starting…</span></div>
@@ -338,7 +339,7 @@ td select.clubsel{font-size:.8rem}
   <section class="card" id="sec-flight">
     <div class="shead"><div><h2>Ball Flight</h2><span class="sub">Every shot in the Shot Log seen from the side. Marker = apex (● full, ▲ 1/3, ■ 1/2), dotted line = estimated flight from carry, apex and launch angle. Typical Flight adds a solid line per club card. Height is stretched so flights are easy to compare.</span></div></div>
     <div class="chart" id="flight"></div>
-    <div class="progfoot"><div class="legend" id="flight-legend"></div><div class="progctl elltog2" id="flight-tog"></div></div>
+    <div class="progfoot flfoot"><span></span><div class="legend" id="flight-legend"></div><div class="progctl elltog2" id="flight-tog"></div></div>
   </section>
 
   <section class="card" id="sec-top">
@@ -1346,7 +1347,7 @@ function flightShape(sh){ const C=sh.carry, A=sh.apex; let xa=C*.58; if(sh.launc
   xa=Math.min(.75*C,Math.max(.5*C,xa)); return {C,A,xa,land:Math.atan(2*A/(C-xa))*180/Math.PI}; }
 function renderFlight(){
   // play the flight animation when the chart is on screen: now if visible, otherwise the first time it scrolls into view
-  let flAnim=false; { const box=$('flight'); if(S.anim&&box){ const r=box.getBoundingClientRect(); if(r.top<innerHeight&&r.bottom>0) flAnim=true; else S.flPending=true; } else if(S.flNow){ flAnim=true; } }
+  let flAnim=false; { const box=$('flight'); if(S.anim&&box){ const r=box.getBoundingClientRect(); if(r.top<innerHeight&&r.bottom>0) flAnim=true; else S.flPending=true; } else if(S.flNow&&!matchMedia('(prefers-reduced-motion: reduce)').matches){ flAnim=true; } }
   if(!S.flObs&&window.IntersectionObserver&&$('flight')){ S.flObs=new IntersectionObserver(es=>{ for(const e of es) if(e.isIntersecting&&S.flPending){ S.flPending=false; S.flNow=true; renderFlight(); S.flNow=false; } },{threshold:.25}); S.flObs.observe($('flight')); }
   const el=$('flight'); if(!el) return;
   // clubs can be switched off here for Ball Flight only; a club change in the top bar resets this
@@ -1356,7 +1357,7 @@ function renderFlight(){
   const sh=base.filter(s=>!foff.has(s.club));
   const lens=LEN.filter(l=>l!=='full'&&sh.some(s=>isWedge(s.club)&&s.len===l));
   const DASH={full:'2 3',half:'7 4',third:'1 4'};
-  $('flight-legend').innerHTML='<div class="lgrow" style="justify-content:flex-start">'+allC.map(c=>`<button type="button" class="lgbtn${foff.has(c)?' off':''}" data-flclub="${esc(c)}" aria-pressed="${!foff.has(c)}" title="${foff.has(c)?'Show':'Hide'} ${esc(c)} in Ball Flight"><span class="swatch" style="background:${colorOf(c)}"></span>${esc(c)}</button>`).join('')+'</div>';
+  $('flight-legend').innerHTML='<div class="lgrow">'+allC.map(c=>`<button type="button" class="lgbtn${foff.has(c)?' off':''}" data-flclub="${esc(c)}" aria-pressed="${!foff.has(c)}" title="${foff.has(c)?'Show':'Hide'} ${esc(c)} in Ball Flight"><span class="swatch" style="background:${colorOf(c)}"></span>${esc(c)}</button>`).join('')+'</div>';
   if(!sh.length){ el.innerHTML='<div class="empty">No shots with carry and apex in the current filter.</div>'; return; }
   const w=W(el), L=40, R=16, T=14, B=30, h=Math.round(Math.min(360,Math.max(230,w*.32)));
   const xmax=Math.ceil((Math.max(...sh.map(s=>s.carry))+5)/10)*10, ymax=Math.ceil(Math.max(...sh.map(s=>s.apex))*1.12+1);
@@ -1371,10 +1372,17 @@ function renderFlight(){
   for(const p of sh){ const f=flightShape(p), col=colorOf(p.club), N=18; const pts=[]; const dl=(fi++*stag).toFixed(0);
     for(let i=0;i<=N;i++){ const u=i/N; pts.push([f.xa*u, f.A*(1-(1-u)**2)]); }
     for(let i=1;i<=N;i++){ const u=i/N; pts.push([f.xa+(f.C-f.xa)*u, f.A*(1-u**2)]); }
-    s+=`<path d="M${pts.map(([a,b])=>x(a).toFixed(1)+','+y(b).toFixed(1)).join('L')}" fill="none" stroke="${col}" stroke-width="1.3" stroke-opacity=".6" stroke-dasharray="${DASH[isWedge(p.club)?p.len:'full']}" class="fl" style="animation-delay:${dl}ms"/>`;
+    s+=`<path d="M${pts.map(([a,b])=>x(a).toFixed(1)+','+y(b).toFixed(1)).join('L')}" fill="none" stroke="${col}" stroke-width="1.3" stroke-opacity=".6" stroke-dasharray="${DASH[isWedge(p.club)?p.len:'full']}" class="fl"${flAnim&&f.C>0?` clip-path="url(#flc${fi})"`:''}/>`;
+    if(flAnim&&f.C>0){ const W0=x(f.C)-x(0); s+=`<clipPath id="flc${fi}"><rect x="${(x(0)-3).toFixed(1)}" y="0" height="${h}" width="0"><animate attributeName="width" from="3" to="${(W0+3).toFixed(1)}" begin="${dl}ms" dur="1100ms" fill="freeze"/></rect></clipPath>`; }
     const tip=`${p.club}${isWedge(p.club)&&p.len!=='full'?' · '+LENS[p.len]:''} · ${p.day}\nCarry ${fmt(p.carry)} yds\nApex ${fmt(p.apex)} yds`+(p.launch!=null?`\nLaunch ${fmt(p.launch)}°`:'')+`\nEst. landing angle ${fmt(f.land,0)}°`;
     const on=S.topShot===p.id; if(on) selMark=`<path d="M${pts.map(([a,b])=>x(a).toFixed(1)+','+y(b).toFixed(1)).join('L')}" fill="none" stroke="${col}" stroke-width="2.5" stroke-dasharray="2 3"/><circle cx="${x(f.xa)}" cy="${y(f.A)}" r="8" fill="none" stroke="var(--ink)" stroke-width="2"/>`;
-    marks+=`<g class="mk" style="animation-delay:${+dl+700}ms" data-tip="${esc(tip)}" data-sid="${esc(p.id)}"><circle cx="${x(f.xa)}" cy="${y(f.A)}" r="8" fill="transparent"/>${shape(isWedge(p.club)?p.len:'full',x(f.xa),y(f.A),col,false,3.4)}<circle cx="${x(f.C)}" cy="${y(0)}" r="2.4" fill="${col}"/></g>`; }
+    const sk=isWedge(p.club)?p.len:'full';
+    if(flAnim&&f.C>0){ const FD=1100, up=pts.slice(0,N+1).map(([a,b])=>[x(a),y(b)]); let cum=[0];
+      for(let i=1;i<up.length;i++) cum.push(cum[i-1]+Math.hypot(up[i][0]-up[i-1][0],up[i][1]-up[i-1][1]));
+      const tot=cum[cum.length-1]||1, kt=up.map((_,i)=>(i/N).toFixed(4)).join(';'), kp=cum.map(c=>Math.min(1,c/tot).toFixed(4)).join(';');
+      const dur=Math.max(60,FD*f.xa/f.C).toFixed(0);
+      marks+=`<g class="mk" data-tip="${esc(tip)}" data-sid="${esc(p.id)}"><circle cx="${x(f.xa)}" cy="${y(f.A)}" r="8" fill="transparent"/><g visibility="hidden"><set attributeName="visibility" to="visible" begin="${dl}ms" fill="freeze"/><animateMotion begin="${dl}ms" dur="${dur}ms" fill="freeze" calcMode="linear" keyTimes="${kt}" keyPoints="${kp}" path="M${up.map(([a,b])=>a.toFixed(1)+','+b.toFixed(1)).join('L')}"/>${shape(sk,0,0,col,false,3.4)}</g><circle cx="${x(f.C)}" cy="${y(0)}" r="0" fill="${col}"><animate attributeName="r" values="0;3.6;2.4" begin="${+dl+FD}ms" dur="300ms" fill="freeze"/></circle></g>`; }
+    else marks+=`<g class="mk" data-tip="${esc(tip)}" data-sid="${esc(p.id)}"><circle cx="${x(f.xa)}" cy="${y(f.A)}" r="8" fill="transparent"/>${shape(sk,x(f.xa),y(f.A),col,false,3.4)}<circle cx="${x(f.C)}" cy="${y(0)}" r="2.4" fill="${col}"/></g>`; }
   $('flight-tog').innerHTML=`<button type="button" class="chip" data-typ="1" aria-pressed="${!!S.showTyp}">Typical Flight</button>`;
   // toggle on: add a solid "typical flight" per club card (median carry, average apex and launch)
   if(S.showTyp){ for(const g of groupList(filtered()).filter(g=>!foff.has(g.club))){ const c=median(vals(g.shots,'carry')), A=stat(g.shots,'apex').m; if(!(c>0&&A>0)) continue;
@@ -1385,9 +1393,10 @@ function renderFlight(){
     marks+=`<g data-tip="${esc(tip)}"><path d="M${pts.map(([a,b])=>x(a).toFixed(1)+','+y(b).toFixed(1)).join('L')}" fill="none" stroke="var(--panel)" stroke-width="5" stroke-linejoin="round"/><path d="M${pts.map(([a,b])=>x(a).toFixed(1)+','+y(b).toFixed(1)).join('L')}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>`
       +shape(isWedge(g.club)?g.len:'full',x(f.xa),y(f.A),col,false,5.5)+`<circle cx="${x(f.C)}" cy="${y(0)}" r="4" fill="${col}" stroke="var(--panel)" stroke-width="1.5"/></g>`; } }
   // swing-length key inside the chart, bottom right: 1/2 above, 1/3 at the bottom
-  { const keys=['half','third'].filter(l=>lens.includes(l)); const kx=w-R-38, ky=h-B-5-(keys.length-1)*16;
+  { const keys=['half','third'].filter(l=>lens.includes(l)); const kx=w-R-38, ky=h-B-16-(keys.length-1)*16;
     keys.forEach((l,i)=>{ const yy=ky+i*16; marks+=shape(l,kx+4,yy-4,'var(--ink2)',false,4)+`<text x="${kx+16}" y="${yy}" class="tlab">${LENS[l]}</text>`; }); }
   el.innerHTML=s+marks+selMark+'</svg>';
+  if(flAnim){ const sv=el.querySelector('svg'); try{ sv.setCurrentTime(0); sv.unpauseAnimations(); }catch(e){} }
 }
 
 /* ---------- top view: club path & face ---------- */
