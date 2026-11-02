@@ -61,7 +61,8 @@ button:focus-visible,.btn:focus-within,select:focus-visible,input:focus-visible{
 button:disabled{opacity:.5;cursor:default}
 .btn input{position:absolute;width:1px;height:1px;opacity:0}
 .btn{position:relative}
-.rail .sessgrp{margin-left:auto}.catwrap{position:relative}.dlg{flex-direction:column;align-items:center;gap:4px}.lgrow{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:2px 4px}.lgrow>span{display:inline-flex;align-items:center;gap:5px;padding:0 6px}.lgbtn{display:inline-flex;align-items:center;gap:5px;padding:2px 6px;border:1px solid transparent;border-radius:999px;background:none;font:inherit;color:var(--ink2);cursor:pointer}.lgbtn:hover{border-color:var(--line)}.lgbtn.off{opacity:.4;text-decoration:line-through}.catpop{position:absolute;top:calc(100% + 6px);left:0;z-index:30;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:150px;box-shadow:0 8px 24px rgba(0,0,0,.12)}.ck{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:.9rem;white-space:nowrap}.ck:hover{background:var(--panel2)}.ck input{appearance:none;-webkit-appearance:none;margin:0 0 0 auto;width:18px;height:18px;border-radius:50%;border:2px solid var(--muted);background:var(--panel);display:grid;place-content:center;cursor:pointer;flex:none}.ck input::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--accent-ink);transform:scale(0);transition:transform .1s}.ck input:checked{background:var(--accent);border-color:var(--accent)}.ck input:checked::after{transform:scale(1)}.ck input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.ckdot{width:10px;height:10px;border-radius:50%;flex:none}.catpop{min-width:170px}.ckall{border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;font-weight:600}.catdots{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}.chip.cat .catdots .dot{margin:0}
+.rail .sessgrp{margin-left:auto}.catwrap{position:relative}.dlg{flex-direction:column;align-items:center;gap:4px}.lgrow{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:2px 4px}.lgrow>span{display:inline-flex;align-items:center;gap:5px;padding:0 6px}.lgbtn{display:inline-flex;align-items:center;gap:5px;padding:2px 6px;border:1px solid transparent;border-radius:999px;background:none;font:inherit;color:var(--ink2);cursor:pointer}.lgbtn:hover{border-color:var(--line)}.lgbtn.off{opacity:.4;text-decoration:line-through}
+.lgbtn.lgall{border-color:var(--ink2);padding:2px 12px;margin-right:6px;color:var(--ink)}.lgbtn.lgall[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--panel)}.lgbtn.lgall:hover{border-color:var(--ink)}.catpop{position:absolute;top:calc(100% + 6px);left:0;z-index:30;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:150px;box-shadow:0 8px 24px rgba(0,0,0,.12)}.ck{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:.9rem;white-space:nowrap}.ck:hover{background:var(--panel2)}.ck input{appearance:none;-webkit-appearance:none;margin:0 0 0 auto;width:18px;height:18px;border-radius:50%;border:2px solid var(--muted);background:var(--panel);display:grid;place-content:center;cursor:pointer;flex:none}.ck input::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--accent-ink);transform:scale(0);transition:transform .1s}.ck input:checked{background:var(--accent);border-color:var(--accent)}.ck input:checked::after{transform:scale(1)}.ck input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.ckdot{width:10px;height:10px;border-radius:50%;flex:none}.catpop{min-width:170px}.ckall{border-bottom:1px solid var(--line);border-radius:6px 6px 0 0;font-weight:600}.catdots{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}.chip.cat .catdots .dot{margin:0}
 .rail{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
 .fgroup{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .fgroup>.eyebrow{margin-right:2px}
@@ -304,7 +305,7 @@ td select.clubsel{font-size:.8rem}
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v222 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
+      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v223 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
       <div class="titlerow">
         <h1>Golf Analyzer<button type="button" class="qhelp hq" id="appq" aria-label="About Golf Analyzer" data-tip="Reads every export in the Golf Data Google Drive folder (R10 and S72). Upload a new CSV there, then press Sync with Drive.">?</button></h1>
         <div class="syncbox"><button class="primary" id="refresh" type="button">Sync with Drive</button><span class="status" id="status" role="status">Starting…</span></div>
@@ -689,8 +690,10 @@ document.addEventListener('click',e=>{
       const solo=all.filter(x=>!off.has(x)); if(solo.length===1&&solo[0]===c){ S.flOff=new Set(); S.flRe='*'; } else { S.flOff=new Set(all.filter(x=>x!==c)); S.flRe=c; }
       renderFlight(); S.flRe=null; return; } }
   if(e.target.closest('[data-flall]')){ if(S.flOff&&S.flOff.size){ S.flOff=new Set(); S.flRe='*'; renderFlight(); S.flRe=null; } return; }
-  { const d=e.target.closest('[data-dispclub]'); if(d){ const c=d.dataset.dispclub, off=S.dispOff||(S.dispOff=new Set());
-      if(off.has(c)) off.delete(c); else { const vis=[...d.parentElement.querySelectorAll('[data-dispclub]')].filter(b=>!off.has(b.dataset.dispclub)); if(vis.length>1) off.add(c); }
+  // Dispersion key: a club shows only that club (click it again for all); All shows every club
+  if(e.target.closest('[data-dispall]')){ if(S.dispOff&&S.dispOff.size){ S.dispOff=new Set(); renderDisp(); } return; }
+  { const d=e.target.closest('[data-dispclub]'); if(d){ const c=d.dataset.dispclub, all=[...d.parentElement.querySelectorAll('[data-dispclub]')].map(b=>b.dataset.dispclub), off=S.dispOff||new Set();
+      const solo=all.filter(x=>!off.has(x)); S.dispOff=solo.length===1&&solo[0]===c?new Set():new Set(all.filter(x=>x!==c));
       renderDisp(); return; } }
   { const o=e.target.closest('[data-catopen]'); if(o){ S.railOpen=S.railOpen===o.dataset.catopen?null:o.dataset.catopen; renderRail(); return; }
     if(S.railOpen&&!e.target.closest('.catpop')){ S.railOpen=null; renderRail(); } }
@@ -865,7 +868,7 @@ function renderDisp(){
   const allClubs=clubOrder().filter(c=>base.some(s=>s.club===c));
   const sh=base.filter(s=>!off.has(s.club));
   const clubs=[...new Set(sh.map(s=>s.club))]; const lens=LEN.filter(l=>l!=='full'&&sh.some(s=>isWedge(s.club)&&s.len===l));
-  $('disp-legend').innerHTML='<div class="lgrow">'+allClubs.map(c=>`<button type="button" class="lgbtn${off.has(c)?' off':''}" data-dispclub="${esc(c)}" aria-pressed="${!off.has(c)}" title="${off.has(c)?'Show':'Hide'} ${esc(c)} in Dispersion"><span class="swatch" style="background:${colorOf(c)}"></span>${esc(c)}</button>`).join('')+'</div>';
+  $('disp-legend').innerHTML='<div class="lgrow"><button type="button" class="lgbtn lgall" data-dispall="1" aria-pressed="'+!off.size+'" title="Show every club">All</button>'+allClubs.map(c=>`<button type="button" class="lgbtn${off.has(c)?' off':''}" data-dispclub="${esc(c)}" aria-pressed="${!off.has(c)}" title="Show only ${esc(c)}"><span class="swatch" style="background:${colorOf(c)}"></span>${esc(c)}</button>`).join('')+'</div>';
   $('ell-tog').innerHTML=`<button type="button" class="chip" data-ell="1" aria-pressed="${S.showEll!==false}">${S.showEll!==false?'Hide':'Show'} dispersion</button>`;
   if(!sh.length){ el.innerHTML='<div class="empty">No shots with carry and offline data in the current filter.</div>'; return; }
   const w=W(el), L=40, R=12, T=10, B=30;
@@ -1359,7 +1362,7 @@ function renderFlight(){
   const sh=base.filter(s=>!foff.has(s.club));
   const lens=LEN.filter(l=>l!=='full'&&sh.some(s=>isWedge(s.club)&&s.len===l));
   const DASH={full:'2 3',half:'7 4',third:'1 4'};
-  $('flight-legend').innerHTML='<div class="lgrow"><button type="button" class="lgbtn'+(foff.size?' off':'')+'" data-flall="1" aria-pressed="'+!foff.size+'" title="Show every club">All</button>'+allC.map(c=>`<button type="button" class="lgbtn${foff.has(c)?' off':''}" data-flclub="${esc(c)}" aria-pressed="${!foff.has(c)}" title="Show only ${esc(c)}"><span class="swatch" style="background:${colorOf(c)}"></span>${esc(c)}</button>`).join('')+'</div>';
+  $('flight-legend').innerHTML='<div class="lgrow"><button type="button" class="lgbtn lgall" data-flall="1" aria-pressed="'+!foff.size+'" title="Show every club">All</button>'+allC.map(c=>`<button type="button" class="lgbtn${foff.has(c)?' off':''}" data-flclub="${esc(c)}" aria-pressed="${!foff.has(c)}" title="Show only ${esc(c)}"><span class="swatch" style="background:${colorOf(c)}"></span>${esc(c)}</button>`).join('')+'</div>';
   if(!sh.length){ el.innerHTML='<div class="empty">No shots with carry and apex in the current filter.</div>'; return; }
   const w=W(el), L=40, R=16, T=14, B=30, h=Math.round(Math.min(360,Math.max(230,w*.32)));
   const xmax=Math.ceil((Math.max(...sh.map(s=>s.carry))+5)/10)*10, ymax=Math.ceil(Math.max(...sh.map(s=>s.apex))*1.12+1);
