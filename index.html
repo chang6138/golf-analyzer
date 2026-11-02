@@ -314,7 +314,7 @@ td select.clubsel{font-size:.8rem}
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v229 · updated Nov 2, 2026</span></span></span>
+      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v230 · updated Nov 2, 2026</span></span></span>
       <div class="titlerow">
         <div class="h1row">
           <h1>Golf Analyzer<button type="button" class="qhelp hq" id="appq" aria-label="About Golf Analyzer" data-tip="Reads every export in the Golf Data Google Drive folder (R10 and S72). Upload a new CSV there, then press Sync with Drive.">?</button></h1>
@@ -1421,12 +1421,16 @@ function clubTop(club,col){
     +`<path d="${face}" fill="none" stroke="${col}" stroke-width="3.5" stroke-linecap="round"/>`
     +`<circle cx="${hosel[0]}" cy="${hosel[1]}" r="3.5" fill="var(--panel)" stroke="${col}" stroke-width="1.5"/>`;
 }
+// short stable id from text, so a redraw of the same picture produces identical markup
+function hashStr(t){ let h=5381; for(let i=0;i<t.length;i++) h=((h<<5)+h+t.charCodeAt(i))|0; return (h>>>0).toString(36); }
+// write markup only when it changed: background redraws (Drive sync) leave the Impact panels untouched, so nothing restarts or repaints half-way
+function put(el,html){ if(el&&el.__src!==html){ el.innerHTML=html; el.__src=html; } }
 function topSVG(club,P,F,FP,w){
   const col=colorOf(club);
   // diagram: seen from above, target to the right, right-handed golfer standing at the top; + angles point down (right of target)
   const h=Math.round(Math.max(220,w*.48)), cx=Math.round(w*.4), cy=Math.round(h*.52), br=9, rad=d=>Math.max(-60,Math.min(60,d*TK))*Math.PI/180;
   const dir=d=>[Math.cos(rad(d)),Math.sin(rad(d))];
-  const cid='tclip'+(++topSVG.n||(topSVG.n=1));
+  const cid='tclip'+hashStr([club,P,F,FP,w].join('|'));
   let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" overflow="hidden" role="img" aria-label="Top view of club path and face angle" class="a-imp"><clipPath id="${cid}"><rect x="0" y="0" width="${w}" height="${h}"/></clipPath><g clip-path="url(#${cid})">`;
   s+=`<defs><marker id="tarr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10Z" fill="var(--ink2)"/></marker></defs>`;
   s+=`<line x1="10" x2="${w-10}" y1="${cy}" y2="${cy}" stroke="var(--muted)" stroke-dasharray="4 4"/><text x="${w-10}" y="${cy-8}" class="tlab" text-anchor="end">target →</text>`;
@@ -1483,18 +1487,18 @@ function renderTop(){
   const blank=(el)=>{ const w=Math.min(600,W(el)-14), h=Math.round(Math.max(220,w*.48)); return `<div class="tbox"><svg viewBox="0 0 ${w} ${h}" width="100%" role="img" aria-label="No shot selected"><text x="${w/2}" y="${h/2+5}" text-anchor="middle" class="tempty">Select a shot</text></svg></div>`; };
   const dash=lab=>`<div class="tstat"><span>${lab}</span><b>—</b><em>—</em></div>`;
   if(!shot){
-    hd.innerHTML='';
-    top.innerHTML=blank(top); side.innerHTML=blank(side);
-    $('top-info').innerHTML=`<div class="tstats">${dash('Club path')}${dash('Face angle')}${dash('Face to path')}</div>`;
-    $('side-info').innerHTML=sideTiles('',null,null,null,null); return; }
+    put(hd,'');
+    put(top,blank(top)); put(side,blank(side));
+    put($('top-info'),`<div class="tstats">${dash('Club path')}${dash('Face angle')}${dash('Face to path')}</div>`);
+    put($('side-info'),sideTiles('',null,null,null,null)); return; }
   const dt=new Date(shot.t), hasPF=shot.path!=null&&shot.face!=null;
   const P=shot.path, F=shot.face, FP=hasPF?(shot.f2p!=null?shot.f2p:F-P):null;
-  hd.innerHTML=`<span>Shot: <b>${esc(glabel(shot))}</b> · ${shortDay(shot.day)} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}${shot.carry!=null?` · ${fmt(shot.carry)} yds carry`:''}${shot.offline!=null?`, ${fmt(Math.abs(shot.offline))} ${shot.offline<0?'L':'R'}`:''}${shot.apex!=null?`, apex ${fmt(shot.apex)} yds`:''}${shot.sw?` · S72: tempo ${fmt(shot.sw.tempo,2)}:1, hand speed ${fmt(shot.sw.handSpeed,1)} mph`:''}</span><button type="button" data-topavg="1">Clear</button>`;
-  if(hasPF){ top.innerHTML=`<div class="tbox">${topSVG(shot.club,P,F,FP,Math.min(600,W(top)-14))}</div>`; $('top-info').innerHTML=topTiles(P,F,FP)+pfNote(shot); }
-  else { top.innerHTML='<div class="empty">The R10 didn’t record club path and face angle for this shot.</div>'; $('top-info').innerHTML=`<div class="tstats">${dash('Club path')}${dash('Face angle')}${dash('Face to path')}</div>`; }
-  if(shot.attack!=null||shot.launch!=null){ side.innerHTML=`<div class="tbox">${sideSVG(shot.club,shot.attack,shot.launch,shot.spin,Math.min(600,W(side)-14))}</div>`; }
-  else side.innerHTML='<div class="empty">The R10 didn’t record attack angle or launch for this shot.</div>';
-  $('side-info').innerHTML=sideTiles(shot.club,shot.len,shot.attack,shot.launch,shot.spin)+alsNote(shot);
+  put(hd,`<span>Shot: <b>${esc(glabel(shot))}</b> · ${shortDay(shot.day)} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}${shot.carry!=null?` · ${fmt(shot.carry)} yds carry`:''}${shot.offline!=null?`, ${fmt(Math.abs(shot.offline))} ${shot.offline<0?'L':'R'}`:''}${shot.apex!=null?`, apex ${fmt(shot.apex)} yds`:''}${shot.sw?` · S72: tempo ${fmt(shot.sw.tempo,2)}:1, hand speed ${fmt(shot.sw.handSpeed,1)} mph`:''}</span><button type="button" data-topavg="1">Clear</button>`);
+  if(hasPF){ put(top,`<div class="tbox">${topSVG(shot.club,P,F,FP,Math.min(600,W(top)-14))}</div>`); put($('top-info'),topTiles(P,F,FP)+pfNote(shot)); }
+  else { put(top,'<div class="empty">The R10 didn’t record club path and face angle for this shot.</div>'); put($('top-info'),`<div class="tstats">${dash('Club path')}${dash('Face angle')}${dash('Face to path')}</div>`); }
+  if(shot.attack!=null||shot.launch!=null){ put(side,`<div class="tbox">${sideSVG(shot.club,shot.attack,shot.launch,shot.spin,Math.min(600,W(side)-14))}</div>`); }
+  else put(side,'<div class="empty">The R10 didn’t record attack angle or launch for this shot.</div>');
+  put($('side-info'),sideTiles(shot.club,shot.len,shot.attack,shot.launch,shot.spin)+alsNote(shot));
 }
 
 /* ---------- side view: attack, launch & spin ---------- */
@@ -1514,7 +1518,7 @@ function sideSVG(club,AA,LA,SP,w){
   const col=colorOf(club), h=Math.round(Math.max(220,w*.48)), g=h-30, cx=Math.round(w*.4), br=14, K=1.7;
   const tee=club==='Driver'?br*1.4:0, cy=g-br-tee, R=Math.PI/180;
   const DL=Math.max(4,Math.min(64,(LA!=null?LA:20)/(club==='Driver'?.85:.82))); // loft at impact implied by launch
-  const cid='sclip'+(++sideSVG.n||(sideSVG.n=1));
+  const cid='sclip'+hashStr([club,AA,LA,SP,w].join('|'));
   let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" overflow="hidden" role="img" aria-label="Side view of attack angle, launch angle and spin" class="a-imp"><clipPath id="${cid}"><rect x="0" y="0" width="${w}" height="${h}"/></clipPath><g clip-path="url(#${cid})">`;
   s+=`<defs><marker id="sarr${cid}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10Z" fill="var(--ink2)"/></marker><marker id="sarrc${cid}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10Z" fill="${col}"/></marker></defs>`;
   s+=`<rect x="0" y="${g}" width="${w}" height="${h-g}" fill="var(--grid)"/><line x1="0" x2="${w}" y1="${g}" y2="${g}" stroke="var(--muted)"/>`;
