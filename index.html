@@ -304,7 +304,7 @@ td select.clubsel{font-size:.8rem}
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v220 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
+      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v221 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
       <div class="titlerow">
         <h1>Golf Analyzer<button type="button" class="qhelp hq" id="appq" aria-label="About Golf Analyzer" data-tip="Reads every export in the Golf Data Google Drive folder (R10 and S72). Upload a new CSV there, then press Sync with Drive.">?</button></h1>
         <div class="syncbox"><button class="primary" id="refresh" type="button">Sync with Drive</button><span class="status" id="status" role="status">Starting…</span></div>
@@ -684,9 +684,11 @@ function renderRail(){
    </div>`;
 }
 document.addEventListener('click',e=>{
-  { const d=e.target.closest('[data-flclub]'); if(d){ const c=d.dataset.flclub, off=S.flOff||(S.flOff=new Set());
-      if(off.has(c)){ off.delete(c); S.flRe=c; renderFlight(); S.flRe=null; return; } else { const vis=[...d.parentElement.querySelectorAll('[data-flclub]')].filter(b=>!off.has(b.dataset.flclub)); if(vis.length>1) off.add(c); }
-      renderFlight(); return; } }
+  // Ball Flight key: a club shows only that club (click it again for all); All shows every club
+  { const d=e.target.closest('[data-flclub]'); if(d){ const c=d.dataset.flclub, all=[...d.parentElement.querySelectorAll('[data-flclub]')].map(b=>b.dataset.flclub), off=S.flOff||new Set();
+      const solo=all.filter(x=>!off.has(x)); if(solo.length===1&&solo[0]===c){ S.flOff=new Set(); S.flRe='*'; } else { S.flOff=new Set(all.filter(x=>x!==c)); S.flRe=c; }
+      renderFlight(); S.flRe=null; return; } }
+  if(e.target.closest('[data-flall]')){ if(S.flOff&&S.flOff.size){ S.flOff=new Set(); S.flRe='*'; renderFlight(); S.flRe=null; } return; }
   { const d=e.target.closest('[data-dispclub]'); if(d){ const c=d.dataset.dispclub, off=S.dispOff||(S.dispOff=new Set());
       if(off.has(c)) off.delete(c); else { const vis=[...d.parentElement.querySelectorAll('[data-dispclub]')].filter(b=>!off.has(b.dataset.dispclub)); if(vis.length>1) off.add(c); }
       renderDisp(); return; } }
@@ -1357,7 +1359,7 @@ function renderFlight(){
   const sh=base.filter(s=>!foff.has(s.club));
   const lens=LEN.filter(l=>l!=='full'&&sh.some(s=>isWedge(s.club)&&s.len===l));
   const DASH={full:'2 3',half:'7 4',third:'1 4'};
-  $('flight-legend').innerHTML='<div class="lgrow">'+allC.map(c=>`<button type="button" class="lgbtn${foff.has(c)?' off':''}" data-flclub="${esc(c)}" aria-pressed="${!foff.has(c)}" title="${foff.has(c)?'Show':'Hide'} ${esc(c)} in Ball Flight"><span class="swatch" style="background:${colorOf(c)}"></span>${esc(c)}</button>`).join('')+'</div>';
+  $('flight-legend').innerHTML='<div class="lgrow"><button type="button" class="lgbtn'+(foff.size?' off':'')+'" data-flall="1" aria-pressed="'+!foff.size+'" title="Show every club">All</button>'+allC.map(c=>`<button type="button" class="lgbtn${foff.has(c)?' off':''}" data-flclub="${esc(c)}" aria-pressed="${!foff.has(c)}" title="Show only ${esc(c)}"><span class="swatch" style="background:${colorOf(c)}"></span>${esc(c)}</button>`).join('')+'</div>';
   if(!sh.length){ el.innerHTML='<div class="empty">No shots with carry and apex in the current filter.</div>'; return; }
   const w=W(el), L=40, R=16, T=14, B=30, h=Math.round(Math.min(360,Math.max(230,w*.32)));
   const xmax=Math.ceil((Math.max(...sh.map(s=>s.carry))+5)/10)*10, ymax=Math.ceil(Math.max(...sh.map(s=>s.apex))*1.12+1);
@@ -1369,8 +1371,8 @@ function renderFlight(){
   s+=`<text x="${L+4}" y="${T+4}">apex, yds</text><text x="${w-R}" y="${T+4}" text-anchor="end">carry, yds</text>`;
   let marks='', selMark='';
   const reAn=S.flRe&&!flAnim&&!matchMedia('(prefers-reduced-motion: reduce)').matches?S.flRe:null;
-  let fi=0, ai=0; const stag=Math.max(4,Math.min(14,1400/Math.max(1,reAn?sh.filter(q=>q.club===reAn).length:sh.length)));
-  for(const p of sh){ const f=flightShape(p), col=colorOf(p.club), N=18; const pts=[]; const an=flAnim||(reAn&&p.club===reAn); fi++; const dl=(an?ai++*stag:0).toFixed(0);
+  let fi=0, ai=0; const stag=Math.max(4,Math.min(14,1400/Math.max(1,reAn&&reAn!=='*'?sh.filter(q=>q.club===reAn).length:sh.length)));
+  for(const p of sh){ const f=flightShape(p), col=colorOf(p.club), N=18; const pts=[]; const an=flAnim||(reAn&&(reAn==='*'||p.club===reAn)); fi++; const dl=(an?ai++*stag:0).toFixed(0);
     for(let i=0;i<=N;i++){ const u=i/N; pts.push([f.xa*u, f.A*(1-(1-u)**2)]); }
     for(let i=1;i<=N;i++){ const u=i/N; pts.push([f.xa+(f.C-f.xa)*u, f.A*(1-u**2)]); }
     s+=`<path d="M${pts.map(([a,b])=>x(a).toFixed(1)+','+y(b).toFixed(1)).join('L')}" fill="none" stroke="${col}" stroke-width="1.3" stroke-opacity=".6" stroke-dasharray="${DASH[isWedge(p.club)?p.len:'full']}" class="fl"${an&&f.C>0?` clip-path="url(#flc${fi})"`:''}/>`;
@@ -2032,7 +2034,7 @@ const ZH_RULES=[ // whole sentences that carry numbers
   [/now (.+?) · aim (.+?) to (.+)$/g,'目前 $1 · 目標 $2 至 $3'],
   [/(\d+) shots · (\d+) sessions?/g,'$1 球 · $2 次練習'],
   [/Page (\d+) of (\d+)/g,'第 $1 頁，共 $2 頁'],
-  [/Hide (\S+) in Dispersion/g,'在落點分佈隱藏 $1'],[/Hide (\S+) in Ball Flight/g,'在球飛行軌跡隱藏 $1'],[/Show (\S+) in Ball Flight/g,'在球飛行軌跡顯示 $1'],[/Show (\S+) in Dispersion/g,'在落點分佈顯示 $1'],
+  [/Hide (\S+) in Dispersion/g,'在落點分佈隱藏 $1'],[/^Show only (\S+)$/g,'只顯示 $1'],[/^Show every club$/g,'顯示所有球桿'],[/Hide (\S+) in Ball Flight/g,'在球飛行軌跡隱藏 $1'],[/Show (\S+) in Ball Flight/g,'在球飛行軌跡顯示 $1'],[/Show (\S+) in Dispersion/g,'在落點分佈顯示 $1'],
   [/Average of (\d+) swings?/g,'$1 次揮桿的平均'],[/(\d+) matched to R10 shots by time/g,'$1 次依時間對應 R10 擊球'],
   [/(\d+) excluded \(struck through\)/g,'$1 筆已排除（刪除線）'],
   [/(\d+) shots in the current filter/g,'目前篩選中有 $1 球'],[/(\d+) S72 swings in the current filter/g,'目前篩選中有 $1 次 S72 揮桿'],
@@ -2041,6 +2043,7 @@ const ZH_RULES=[ // whole sentences that carry numbers
 ];
 const ZH_TYPE={'driver':'一號木','fairway wood':'球道木','hybrid':'混合桿','short iron':'短鐵','long iron':'長鐵','wedge':'挖起桿'};
 const ZH_EXACT={ // whole labels (short words that would be unsafe to replace inside sentences)
+  'All':'全部',
   'Up':'向上','Down':'向下','Level':'水平','Low':'偏低','High':'偏高','Normal':'正常','Partial':'部分揮桿','Open':'開放','Closed':'關閉','Square':'正對','Neutral':'中性',
   'Fade':'右曲','Draw':'左曲','Slice':'大右曲','Hook':'大左曲','Straight':'直球','Push':'右推','Pull':'左拉','Full':'全揮','Top':'頂點','Top:':'頂點：','Edit':'編輯','Cancel':'取消',
   'Clear':'清除','Next':'下一頁','Previous':'上一頁','Exclude':'排除','Include':'納入','Dismiss':'略過','to':'至','Club':'球桿','When':'時間','Loaded':'力道','Why':'原因',
