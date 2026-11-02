@@ -264,12 +264,43 @@ td select.clubsel{font-size:.8rem}
 .drop.over{border-color:var(--accent);background:var(--panel2)}
 @media (max-width:560px){.mrow{grid-template-columns:1fr}.mgrid{gap:5px}.cname{font-size:.95rem}.cload{font-size:.58rem;letter-spacing:.02em}.ctop{flex-wrap:wrap;gap:2px}.cell .big{font-size:1.35rem}.cell .big small{font-size:.7rem}.cell .meta{font-size:.62rem}.cell .big .sdv{position:static;display:block;font-size:.62rem;margin:3px 0 0;text-align:center}.cell .dl{display:none}.cell{padding:8px}.matrix{gap:4px}h1{font-size:1.8rem}.kv{grid-template-columns:repeat(2,minmax(0,1fr))}.cell .big{font-size:1.6rem}.matrix .rowh{font-size:1.1rem}.rail{position:static}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ---------- motion ---------- */
+@media (prefers-reduced-motion: no-preference){
+  @keyframes a-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @keyframes a-fade{from{opacity:0}to{opacity:1}}
+  @keyframes a-down{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+  @keyframes a-wipe{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+  @keyframes a-row{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
+  @keyframes a-pop{0%{opacity:0;transform:scale(.2)}70%{transform:scale(1.15)}100%{opacity:1;transform:scale(1)}}
+  @keyframes a-swing{from{opacity:0;transform:translateX(-46px)}to{opacity:1;transform:none}}
+  @keyframes a-draw{from{stroke-dashoffset:600}to{stroke-dashoffset:0}}
+  main>section.card,body section.card{animation:a-rise .55s cubic-bezier(.2,.7,.2,1) both}
+  section.card:nth-of-type(2){animation-delay:.06s}section.card:nth-of-type(3){animation-delay:.12s}section.card:nth-of-type(4){animation-delay:.18s}section.card:nth-of-type(5){animation-delay:.24s}section.card:nth-of-type(n+6){animation-delay:.3s}
+  header.top{animation:a-fade .5s ease-out both}
+  section.card:not(.collapsed)>:not(.shead){animation:a-fade .35s ease-out}
+  svg.a-wipe{animation:a-wipe 1.1s cubic-bezier(.3,.6,.2,1) both}
+  svg.a-rows g.row{animation:a-row .5s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i) * 45ms)}
+  svg.a-pop g[data-sid]{transform-box:fill-box;transform-origin:center;animation:a-pop .45s ease-out both;animation-delay:calc(var(--i) * 2.5ms)}
+  svg.a-imp .a-swingx{animation:a-swing .55s cubic-bezier(.2,.8,.2,1) both}
+  svg.a-imp line[stroke-dasharray],svg.a-imp path[stroke-dasharray]{animation:a-fade .8s .25s ease-out both}
+  .acard.wide .apanel,.acard.wide .apath{animation:a-down .35s ease-out both}
+  .catpop{animation:a-down .18s ease-out both}
+  #tip:not([hidden]){animation:a-fade .12s ease-out}
+  button,.chip,.lgbtn{transition:transform .15s ease,box-shadow .15s ease,background-color .15s ease,border-color .15s ease}
+  button:not(:disabled):hover,.chip:hover{transform:translateY(-1px)}
+  button:not(:disabled):active,.chip:active{transform:translateY(0) scale(.97)}
+  .acard{transition:box-shadow .2s ease,transform .2s ease}
+  .acard:not(.wide):hover{box-shadow:0 6px 18px rgba(0,0,0,.08);transform:translateY(-2px)}
+  .tstat{animation:a-rise .4s ease-out both}
+  #tbl tbody tr,#swtbl tbody tr{transition:background-color .15s ease}
+}
 </style>
 
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v211 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
+      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v212 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
       <div class="titlerow">
         <h1>Golf Analyzer<button type="button" class="qhelp hq" id="appq" aria-label="About Golf Analyzer" data-tip="Reads every export in the Golf Data Google Drive folder (R10 and S72). Upload a new CSV there, then press Sync with Drive.">?</button></h1>
         <div class="syncbox"><button class="primary" id="refresh" type="button">Sync with Drive</button><span class="status" id="status" role="status">Starting…</span></div>
@@ -798,14 +829,14 @@ function renderGap(){
   const mn=Math.min(...gs.map(g=>g.p10)), mx=Math.max(...gs.map(g=>g.p90)), padY=Math.max(8,(mx-mn)*.09);
   const lo=Math.max(0,Math.floor(mn-padY)), hi=Math.ceil(mx+padY);
   const x=lin(lo,hi,L,w-R); const tk=ticks(lo,hi,6);
-  let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" aria-label="Carry range by club and load">`;
+  let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" class="${S.anim?'a-rows':''}" aria-label="Carry range by club and load">`;
   for(const t of tk) s+=`<line class="gridl" x1="${x(t)}" x2="${x(t)}" y1="${top}" y2="${h-22}"/><text x="${x(t)}" y="${h-6}" text-anchor="middle">${t}</text>`;
   s+=`<text x="0" y="${h-6}">carry, yds</text>`;
   gs.forEach((g,i)=>{
     const y=top+i*rh+rh/2, col=colorOf(g.club);
     const next=gs[i+1]; const gap=next?g.med-next.med:null;
     const tip=`${glabel(g)} · ${g.c.length} shots\nMedian ${fmt(g.med)} yds\nMiddle 50%: ${fmt(g.q1)}–${fmt(g.q3)}\n10–90%: ${fmt(g.p10)}–${fmt(g.p90)}`+(gap!=null?`\nGap to next: ${fmt(gap)} yds`:'');
-    s+=`<g data-tip="${esc(tip)}"><rect x="0" y="${y-rh/2}" width="${w}" height="${rh}" fill="transparent"/>`;
+    s+=`<g class="row" style="--i:${i}" data-tip="${esc(tip)}"><rect x="0" y="${y-rh/2}" width="${w}" height="${rh}" fill="transparent"/>`;
     s+=`<rect x="0" y="${y-5}" width="10" height="10" rx="2" fill="${col}"/><text class="lbl" x="16" y="${y+4}">${esc(g.len==='full'?g.club:glabel(g))}</text>`;
     s+=`<line x1="${x(g.p10)}" x2="${x(g.p90)}" y1="${y}" y2="${y}" stroke="var(--ink2)" stroke-width="1.5"/>`;
     s+=`<rect x="${x(g.q1)}" y="${y-7}" width="${Math.max(2,x(g.q3)-x(g.q1))}" height="14" rx="4" fill="${col}" fill-opacity=".28" stroke="${col}" stroke-width="1.5"/>`;
@@ -839,7 +870,7 @@ function renderDisp(){
   const mx=Math.max(5,Math.ceil(Math.max(...sh.map(s=>Math.abs(s.offline)),...ells.map(e=>Math.abs(e.mx)+2*e.sx))+1));
   const ylo=Math.max(0,Math.floor(Math.min(...sh.map(s=>s.carry),...ells.map(e=>e.my-2*e.sy))-5)), yhi=Math.ceil(Math.max(...sh.map(s=>s.carry),...ells.map(e=>e.my+2*e.sy))+5);
   const x=lin(-mx,mx,L,w-R), y=lin(ylo,yhi,h-B,T);
-  let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" aria-label="Carry versus offline dispersion">`;
+  let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" class="${S.anim?'a-pop':''}" aria-label="Carry versus offline dispersion">`;
   for(const t of ticks(ylo,yhi,5)) s+=`<line class="gridl" x1="${L}" x2="${w-R}" y1="${y(t)}" y2="${y(t)}"/><text x="${L-6}" y="${y(t)+4}" text-anchor="end">${t}</text>`;
   // small ticks every 10 yds of carry along the left edge
   { const maj=new Set(ticks(ylo,yhi,5)); for(let t=Math.ceil(ylo/10)*10;t<=yhi;t+=10) s+=`<line x1="${L-(maj.has(t)?4:3)}" x2="${L+(maj.has(t)?0:3)}" y1="${y(t)}" y2="${y(t)}" stroke="var(--muted)" stroke-width="1"/>`; }
@@ -851,7 +882,7 @@ function renderDisp(){
       +`<path d="M${x(mx)-6},${y(my)}H${x(mx)+6}M${x(mx)},${y(my)-6}V${y(my)+6}" stroke="${col}" stroke-width="2"/></g>`; }
   for(const p of sh){
     const tip=`${p.club} · ${LENS[p.len]} · ${p.day}\nCarry ${fmt(p.carry)} yds\nOffline ${fmt(Math.abs(p.offline))} ${p.offline<0?'L':'R'}\nClub ${fmt(p.clubSpeed)} mph`;
-    const on=S.topShot===p.id; s+=`<g data-tip="${esc(tip)}" data-sid="${esc(p.id)}"><circle cx="${x(p.offline)}" cy="${y(p.carry)}" r="9" fill="transparent"/>${on?`<circle cx="${x(p.offline)}" cy="${y(p.carry)}" r="9" fill="none" stroke="var(--ink)" stroke-width="2"/>`:''}${shape(p.len,x(p.offline),y(p.carry),colorOf(p.club),false,on?6:4.5)}</g>`;
+    const on=S.topShot===p.id; s+=`<g style="--i:${Math.min(sh.indexOf(p),180)}" data-tip="${esc(tip)}" data-sid="${esc(p.id)}"><circle cx="${x(p.offline)}" cy="${y(p.carry)}" r="9" fill="transparent"/>${on?`<circle cx="${x(p.offline)}" cy="${y(p.carry)}" r="9" fill="none" stroke="var(--ink)" stroke-width="2"/>`:''}${shape(p.len,x(p.offline),y(p.carry),colorOf(p.club),false,on?6:4.5)}</g>`;
   }
   el.innerHTML=s+'</svg>';
 }
@@ -901,7 +932,7 @@ function renderProgressShots(sh,clubs,day,pLen){
   if(['carry','total','clubSpeed','ballSpeed','spin','apex'].includes(key)) lo=Math.max(0,lo);
   const w=W(el), h=Math.round(Math.min(340,Math.max(240,w*.42))), L=46, R=16, T=12, B=30;
   const x=n>1?lin(0,n-1,L+8,w-R-8):()=>(L+w-R)/2, y=lin(lo,hi,h-B,T);
-  let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" aria-label="${esc(name)} for each shot on ${shortDay(day)}">`;
+  let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" class="${S.anim?'a-wipe':''}" aria-label="${esc(name)} for each shot on ${shortDay(day)}">`;
   for(const t of ticks(lo,hi,5)) s+=`<line class="gridl" x1="${L}" x2="${w-R}" y1="${y(t)}" y2="${y(t)}"/><text x="${L-6}" y="${y(t)+4}" text-anchor="end">${+t.toFixed(dec>1?2:1)}</text>`;
   if(lo<0&&hi>0) s+=`<line x1="${L}" x2="${w-R}" y1="${y(0)}" y2="${y(0)}" stroke="var(--ink2)" stroke-dasharray="3 3"/>`;
   for(const t of ticks(1,n,Math.min(n,Math.max(2,Math.floor((w-L-R)/50))))) if(Number.isInteger(t)) s+=`<text x="${x(t-1)}" y="${h-10}" text-anchor="middle">${t}</text>`;
@@ -935,7 +966,7 @@ function renderProgress(){
   if(agg==='sd'||['carry','total','clubSpeed','ballSpeed','spin','apex'].includes(key)) lo=Math.max(0,lo);
   const w=W(el), h=Math.round(Math.min(340,Math.max(240,w*.42))), L=46, R=16, T=12, B=30;
   const x=days.length>1?lin(0,days.length-1,L+8,w-R-8):()=>(L+w-R)/2, y=lin(lo,hi,h-B,T);
-  let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" aria-label="${esc(name)} by session">`;
+  let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" class="${S.anim?'a-wipe':''}" aria-label="${esc(name)} by session">`;
   for(const t of ticks(lo,hi,5)) s+=`<line class="gridl" x1="${L}" x2="${w-R}" y1="${y(t)}" y2="${y(t)}"/><text x="${L-6}" y="${y(t)+4}" text-anchor="end">${+t.toFixed(dec>1?2:1)}</text>`;
   if(lo<0&&hi>0) s+=`<line x1="${L}" x2="${w-R}" y1="${y(0)}" y2="${y(0)}" stroke="var(--ink2)" stroke-dasharray="3 3"/>`;
   const every=Math.max(1,Math.ceil(days.length/Math.max(2,Math.floor((w-L-R)/58))));
@@ -1118,6 +1149,9 @@ function renderCards(){
   let out=others.length?`<div class="cards">${others.map(card).join('')}</div>`:'';
   for(const c of clubOrder().filter(isWedge)){ const row=gs.filter(g=>g.club===c).sort((a,b)=>['full','half','third'].indexOf(a.len)-['full','half','third'].indexOf(b.len)); if(row.length) out+=`<div class="cardrow">${row.map(card).join('')}</div>`; }
   el.innerHTML=out; layoutCards();
+  if(S.anim&&!S.countedUp&&gs.length){ S.countedUp=true; const els=[...el.querySelectorAll('.hero .v')], t0=performance.now();
+    const fin=els.map(e=>parseFloat(e.textContent)); const step=t=>{ const k=Math.min(1,(t-t0)/800), ease=1-Math.pow(1-k,3);
+      els.forEach((e,i)=>{ if(isFinite(fin[i])) e.textContent=(fin[i]*ease).toFixed(1); }); if(k<1) requestAnimationFrame(step); }; requestAnimationFrame(step); }
 }
 
 /* ---------- calibration ---------- */
@@ -1312,7 +1346,7 @@ function renderFlight(){
   const w=W(el), L=40, R=16, T=14, B=30, h=Math.round(Math.min(360,Math.max(230,w*.32)));
   const xmax=Math.ceil((Math.max(...sh.map(s=>s.carry))+5)/10)*10, ymax=Math.ceil(Math.max(...sh.map(s=>s.apex))*1.12+1);
   const x=lin(0,xmax,L,w-R), y=lin(0,ymax,h-B,T);
-  let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" aria-label="Side view of ball flight: carry against apex">`;
+  let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" class="${S.anim?'a-wipe':''}" aria-label="Side view of ball flight: carry against apex">`;
   for(const t of ticks(0,ymax,4)) s+=`<line class="gridl" x1="${L}" x2="${w-R}" y1="${y(t)}" y2="${y(t)}"/><text x="${L-6}" y="${y(t)+4}" text-anchor="end">${t}</text>`;
   for(const t of ticks(0,xmax,8)) s+=`<line class="gridl" x1="${x(t)}" x2="${x(t)}" y1="${T}" y2="${h-B}"/><text x="${x(t)}" y="${h-12}" text-anchor="middle">${t}</text>`;
   s+=`<line x1="${L}" x2="${w-R}" y1="${y(0)}" y2="${y(0)}" stroke="var(--ink2)"/>`;
@@ -1374,7 +1408,7 @@ function topSVG(club,P,F,FP,w){
   const h=Math.round(Math.max(220,w*.48)), cx=Math.round(w*.4), cy=Math.round(h*.52), br=9, rad=d=>Math.max(-60,Math.min(60,d*TK))*Math.PI/180;
   const dir=d=>[Math.cos(rad(d)),Math.sin(rad(d))];
   const cid='tclip'+(++topSVG.n||(topSVG.n=1));
-  let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" overflow="hidden" role="img" aria-label="Top view of club path and face angle"><clipPath id="${cid}"><rect x="0" y="0" width="${w}" height="${h}"/></clipPath><g clip-path="url(#${cid})">`;
+  let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" overflow="hidden" role="img" aria-label="Top view of club path and face angle" class="a-imp"><clipPath id="${cid}"><rect x="0" y="0" width="${w}" height="${h}"/></clipPath><g clip-path="url(#${cid})">`;
   s+=`<defs><marker id="tarr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10Z" fill="var(--ink2)"/></marker></defs>`;
   s+=`<line x1="10" x2="${w-10}" y1="${cy}" y2="${cy}" stroke="var(--muted)" stroke-dasharray="4 4"/><text x="${w-10}" y="${cy-8}" class="tlab" text-anchor="end">target →</text>`;
   s+=`<text x="${w-10}" y="18" class="tlab" text-anchor="end">${w<460?'inside':'golfer’s side (inside)'}</text><text x="${w-10}" y="${h-8}" class="tlab" text-anchor="end">outside</text>`;
@@ -1390,7 +1424,7 @@ function topSVG(club,P,F,FP,w){
   s+=`<line x1="${cx-pd[0]*L1}" y1="${cy-pd[1]*L1}" x2="${cx+pd[0]*L2}" y2="${cy+pd[1]*L2}" stroke="var(--ink2)" stroke-width="2.5" marker-end="url(#tarr)"/>`;
   { const m=.62, lx=cx-pd[0]*L1*m, ly=cy-pd[1]*L1*m; s+=`<text x="${lx+pd[1]*16}" y="${ly-pd[0]*16+4}" class="tlab" text-anchor="middle">club path</text>`; }
   // clubhead seen from above, face touching the back of the ball and turned to the face angle
-  s+=`<g transform="translate(${cx-br-1},${cy}) rotate(${(Math.max(-60,Math.min(60,F*TK))).toFixed(2)}) scale(1.55)">${clubTop(club,col)}</g>`;
+  s+=`<g class="a-swingx"><g transform="translate(${cx-br-1},${cy}) rotate(${(Math.max(-60,Math.min(60,F*TK))).toFixed(2)}) scale(1.55)">${clubTop(club,col)}</g></g>`;
   s+=`<circle cx="${cx}" cy="${cy}" r="${br}" fill="var(--panel)" stroke="var(--ink)" stroke-width="1.5"/>`;
   s+=`<text x="10" y="18" class="tlab">${w<460?`angles ${TK}×`:`angles drawn ${TK}× larger`}</text>`;
   return s+'</g></svg>';
@@ -1462,7 +1496,7 @@ function sideSVG(club,AA,LA,SP,w){
   const tee=club==='Driver'?br*1.4:0, cy=g-br-tee, R=Math.PI/180;
   const DL=Math.max(4,Math.min(64,(LA!=null?LA:20)/(club==='Driver'?.85:.82))); // loft at impact implied by launch
   const cid='sclip'+(++sideSVG.n||(sideSVG.n=1));
-  let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" overflow="hidden" role="img" aria-label="Side view of attack angle, launch angle and spin"><clipPath id="${cid}"><rect x="0" y="0" width="${w}" height="${h}"/></clipPath><g clip-path="url(#${cid})">`;
+  let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" overflow="hidden" role="img" aria-label="Side view of attack angle, launch angle and spin" class="a-imp"><clipPath id="${cid}"><rect x="0" y="0" width="${w}" height="${h}"/></clipPath><g clip-path="url(#${cid})">`;
   s+=`<defs><marker id="sarr${cid}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10Z" fill="var(--ink2)"/></marker><marker id="sarrc${cid}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10Z" fill="${col}"/></marker></defs>`;
   s+=`<rect x="0" y="${g}" width="${w}" height="${h-g}" fill="var(--grid)"/><line x1="0" x2="${w}" y1="${g}" y2="${g}" stroke="var(--muted)"/>`;
   s+=`<text x="${w-10}" y="${g-8}" class="tlab" text-anchor="end">target →</text><text x="10" y="18" class="tlab">${w<460?`attack ${TKA}×`:`attack angle drawn ${TKA}× larger`}</text>`;
@@ -1479,7 +1513,7 @@ function sideSVG(club,AA,LA,SP,w){
   const head=clubSide(club,col); const tx=head.top[0]*K, ty=head.top[1]*K;
   const topX=bx+tx*cl+ty*sl, topY=base-tx*sl+ty*cl; // head.top rotated by -DL around the leading edge
   s+=`<line x1="${topX}" y1="${topY}" x2="${topX+18}" y2="${topY-110}" stroke="var(--muted)" stroke-width="3" stroke-linecap="round"/>`;
-  s+=`<g transform="translate(${bx},${base}) rotate(${(-DL).toFixed(2)}) scale(${K})">${head.svg}</g>`;
+  s+=`<g class="a-swingx"><g transform="translate(${bx},${base}) rotate(${(-DL).toFixed(2)}) scale(${K})">${head.svg}</g></g>`;
   // attack: the club's up/down travel through the contact point
   if(AA!=null){ const a=Math.max(-40,Math.min(40,AA*TKA))*R, d=[Math.cos(a),-Math.sin(a)]; const pc=[cx-cl*br,cy+sl*br];
     const L1=Math.min(pc[0]-14, d[1]>0?(pc[1]-24)/d[1]:d[1]<0?(g-pc[1]-4)/-d[1]:1e9), L2=50;
@@ -1675,7 +1709,7 @@ function renderSwLog(){
   box.innerHTML=`<table class="swt"><thead><tr>${SWCOLS.map(([c,l,a])=>c==='x'?'<th></th>':`<th class="sortable ${a||''}" data-swsort="${c}" aria-sort="${S.swSort.k===c?(S.swSort.d>0?'ascending':'descending'):'none'}">${l}${S.swSort.k===c?(S.swSort.d>0?' ↑':' ↓'):''}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>`;
   $('swpager').innerHTML=pages>1?`<button type="button" data-swpage="-1" ${S.swPage===0?'disabled':''}>Previous</button><span>Page ${S.swPage+1} of ${pages}</span><button type="button" data-swpage="1" ${S.swPage>=pages-1?'disabled':''}>Next</button>`:'';
 }
-function render(){ renderReview(); renderRail(); renderMatrix(); renderGap(); renderDisp(); renderProgress(); renderFlight(); renderTop(); renderSide(); renderSwing(); renderSwLog(); renderCards(); renderCalib(); renderTable(); }
+function render(){ S.anim=!matchMedia('(prefers-reduced-motion: reduce)').matches; requestAnimationFrame(()=>{ S.anim=false; }); renderReview(); renderRail(); renderMatrix(); renderGap(); renderDisp(); renderProgress(); renderFlight(); renderTop(); renderSide(); renderSwing(); renderSwLog(); renderCards(); renderCalib(); renderTable(); }
 
 /* ---------- tooltip ---------- */
 const tip=$('tip');
