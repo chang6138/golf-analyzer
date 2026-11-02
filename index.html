@@ -303,7 +303,7 @@ td select.clubsel{font-size:.8rem}
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v213 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
+      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v214 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
       <div class="titlerow">
         <h1>Golf Analyzer<button type="button" class="qhelp hq" id="appq" aria-label="About Golf Analyzer" data-tip="Reads every export in the Golf Data Google Drive folder (R10 and S72). Upload a new CSV there, then press Sync with Drive.">?</button></h1>
         <div class="syncbox"><button class="primary" id="refresh" type="button">Sync with Drive</button><span class="status" id="status" role="status">Starting…</span></div>
@@ -1339,6 +1339,9 @@ function renderReview(){
 function flightShape(sh){ const C=sh.carry, A=sh.apex; let xa=C*.58; if(sh.launch>0) xa=2*A/Math.tan(sh.launch*Math.PI/180);
   xa=Math.min(.75*C,Math.max(.5*C,xa)); return {C,A,xa,land:Math.atan(2*A/(C-xa))*180/Math.PI}; }
 function renderFlight(){
+  // play the flight animation when the chart is on screen: now if visible, otherwise the first time it scrolls into view
+  let flAnim=false; { const box=$('flight'); if(S.anim&&box){ const r=box.getBoundingClientRect(); if(r.top<innerHeight&&r.bottom>0) flAnim=true; else S.flPending=true; } else if(S.flNow){ flAnim=true; } }
+  if(!S.flObs&&window.IntersectionObserver&&$('flight')){ S.flObs=new IntersectionObserver(es=>{ for(const e of es) if(e.isIntersecting&&S.flPending){ S.flPending=false; S.flNow=true; renderFlight(); S.flNow=false; } },{threshold:.25}); S.flObs.observe($('flight')); }
   const el=$('flight'); if(!el) return;
   const sh=filtered().filter(s=>s.carry>0&&s.apex>0).sort((a,b)=>clubCmp(a.club,b.club));
   const clubs=[...new Set(sh.map(s=>s.club))];
@@ -1349,7 +1352,7 @@ function renderFlight(){
   const w=W(el), L=40, R=16, T=14, B=30, h=Math.round(Math.min(360,Math.max(230,w*.32)));
   const xmax=Math.ceil((Math.max(...sh.map(s=>s.carry))+5)/10)*10, ymax=Math.ceil(Math.max(...sh.map(s=>s.apex))*1.12+1);
   const x=lin(0,xmax,L,w-R), y=lin(0,ymax,h-B,T);
-  let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" class="${S.anim?'a-fl':''}" aria-label="Side view of ball flight: carry against apex">`;
+  let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" class="${flAnim?'a-fl':''}" aria-label="Side view of ball flight: carry against apex">`;
   for(const t of ticks(0,ymax,4)) s+=`<line class="gridl" x1="${L}" x2="${w-R}" y1="${y(t)}" y2="${y(t)}"/><text x="${L-6}" y="${y(t)+4}" text-anchor="end">${t}</text>`;
   for(const t of ticks(0,xmax,8)) s+=`<line class="gridl" x1="${x(t)}" x2="${x(t)}" y1="${T}" y2="${h-B}"/><text x="${x(t)}" y="${h-12}" text-anchor="middle">${t}</text>`;
   s+=`<line x1="${L}" x2="${w-R}" y1="${y(0)}" y2="${y(0)}" stroke="var(--ink2)"/>`;
