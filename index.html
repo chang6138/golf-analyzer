@@ -314,7 +314,7 @@ td select.clubsel{font-size:.8rem}
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v230 · updated Nov 2, 2026</span></span></span>
+      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v231 · updated Nov 2, 2026</span></span></span>
       <div class="titlerow">
         <div class="h1row">
           <h1>Golf Analyzer<button type="button" class="qhelp hq" id="appq" aria-label="About Golf Analyzer" data-tip="Reads every export in the Golf Data Google Drive folder (R10 and S72). Upload a new CSV there, then press Sync with Drive.">?</button></h1>
@@ -1397,8 +1397,7 @@ function shotShape(face,f2p){ const st=face<-2?'Pull':face>2?'Push':''; const cv
   if(!st&&!cv) return 'Straight'; if(!st) return cv[0].toUpperCase()+cv.slice(1); return cv?st+' '+cv:st; }
 function selectShot(id){ const sh=S.shots.find(s=>s.id===id); if(!sh) return;
   S.topShot=S.topShot===id?null:id; S.swSel=S.topShot&&sh.sw?sh.sw.id:null; S.swJump=true; renderSwing(); renderSwLog();
-  renderTop(); renderSide(); renderFlight(); renderDisp(); renderTable();
-  const sec=$('sec-top'), r=sec.getBoundingClientRect(); if(S.topShot&&(r.bottom<60||r.top>innerHeight-60)) sec.scrollIntoView({behavior:'smooth',block:'start'}); }
+  renderTop(); renderSide(); renderFlight(); renderDisp(); renderTable(); }
 
 // clubhead outline from above. Local axes: x = toward the target (face at x=0, head behind it), y = down the face (heel at top near the golfer, toe at bottom)
 function clubTop(club,col){
