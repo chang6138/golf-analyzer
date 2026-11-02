@@ -171,6 +171,7 @@ section.card.collapsed{gap:0}
 .tsel{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font-size:.9rem;color:var(--ink2)}
 #tbl tr[data-sid]{cursor:pointer}
 #tbl tr.selrow td{background-color:color-mix(in srgb,var(--accent) 12%,transparent)}
+#tip.act{pointer-events:auto}.tipbtn{margin-top:7px;padding:3px 10px;border-radius:999px;border:1px solid var(--bg);background:transparent;color:var(--bg);font:600 .74rem var(--f-body);cursor:pointer}.tipbtn:hover{background:var(--bg);color:var(--ink)}
 #tip{position:fixed;z-index:20;pointer-events:none;background:var(--ink);color:var(--bg);font:500 .78rem/1.4 var(--f-mono);padding:7px 9px;border-radius:6px;white-space:pre-line;max-width:260px;box-shadow:0 4px 14px rgb(0 0 0 / .2)}
 /* analysis cards */
 .cardrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
@@ -314,7 +315,7 @@ td select.clubsel{font-size:.8rem}
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v231 · updated Nov 2, 2026</span></span></span>
+      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v232 · updated Nov 2, 2026</span></span></span>
       <div class="titlerow">
         <div class="h1row">
           <h1>Golf Analyzer<button type="button" class="qhelp hq" id="appq" aria-label="About Golf Analyzer" data-tip="Reads every export in the Golf Data Google Drive folder (R10 and S72). Upload a new CSV there, then press Sync with Drive.">?</button></h1>
@@ -1733,11 +1734,16 @@ function render(quiet){ S.anim=!quiet&&!matchMedia('(prefers-reduced-motion: red
 const tip=$('tip');
 function showTip(e){ const t=e.target.closest&&e.target.closest('[data-tip]'); if(!t){ tip.hidden=true; return; }
   tip.textContent=t.getAttribute('data-tip'); tip.hidden=false;
+  // a ball in Ball Flight or Dispersion: offer a jump to its Impact
+  const ball=t.dataset.sid&&t.closest('#flight,#disp'); tip.classList.toggle('act',!!ball);
+  if(ball){ const b=document.createElement('button'); b.type='button'; b.className='tipbtn'; b.dataset.goimpact=t.dataset.sid; b.textContent='Check Impact'; tip.append(document.createElement('br'),b); }
   const r=tip.getBoundingClientRect(); let x=e.clientX+14, y=e.clientY+14;
   if(x+r.width>innerWidth-8) x=e.clientX-r.width-14; if(y+r.height>innerHeight-8) y=e.clientY-r.height-14;
   tip.style.left=Math.max(8,x)+'px'; tip.style.top=Math.max(8,y)+'px'; }
 // details pop up on click/tap; clicking empty space (anything without details) closes them
-document.addEventListener('click',e=>{ if(e.target.closest('[data-tip]')) showTip(e); else tip.hidden=true; },true);
+document.addEventListener('click',e=>{ const g=e.target.closest('[data-goimpact]');
+  if(g){ e.stopPropagation(); tip.hidden=true; if(S.topShot!==g.dataset.goimpact) selectShot(g.dataset.goimpact); $('sec-top').scrollIntoView({behavior:'smooth',block:'start'}); return; }
+  if(e.target.closest('[data-tip]')) showTip(e); else tip.hidden=true; },true);
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') tip.hidden=true; });
 let rz; addEventListener('resize',()=>{ clearTimeout(rz); rz=setTimeout(()=>{ renderGap(); renderDisp(); renderProgress(); renderFlight(); renderTop(); renderSide(); renderSwing(); },150); });
 
@@ -1931,7 +1937,7 @@ const ZH_RULES=[ // whole sentences that carry numbers
 ];
 const ZH_TYPE={'driver':'一號木','fairway wood':'球道木','hybrid':'混合桿','short iron':'短鐵','long iron':'長鐵','wedge':'挖起桿'};
 const ZH_EXACT={ // whole labels (short words that would be unsafe to replace inside sentences)
-  'Dark':'深色','Light':'淺色',  'All':'全部',
+  'Check Impact':'查看擊球瞬間',  'Dark':'深色','Light':'淺色',  'All':'全部',
   'Up':'向上','Down':'向下','Level':'水平','Low':'偏低','High':'偏高','Normal':'正常','Partial':'部分揮桿','Open':'開放','Closed':'關閉','Square':'正對','Neutral':'中性',
   'Fade':'右曲','Draw':'左曲','Slice':'大右曲','Hook':'大左曲','Straight':'直球','Push':'右推','Pull':'左拉','Full':'全揮','Top':'頂點','Top:':'頂點：','Edit':'編輯','Cancel':'取消',
   'Clear':'清除','Next':'下一頁','Previous':'上一頁','Exclude':'排除','Include':'納入','Dismiss':'略過','to':'至','Club':'球桿','When':'時間','Loaded':'力道','Why':'原因',
