@@ -304,7 +304,7 @@ td select.clubsel{font-size:.8rem}
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v219 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
+      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v220 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
       <div class="titlerow">
         <h1>Golf Analyzer<button type="button" class="qhelp hq" id="appq" aria-label="About Golf Analyzer" data-tip="Reads every export in the Golf Data Google Drive folder (R10 and S72). Upload a new CSV there, then press Sync with Drive.">?</button></h1>
         <div class="syncbox"><button class="primary" id="refresh" type="button">Sync with Drive</button><span class="status" id="status" role="status">Starting…</span></div>
@@ -685,7 +685,7 @@ function renderRail(){
 }
 document.addEventListener('click',e=>{
   { const d=e.target.closest('[data-flclub]'); if(d){ const c=d.dataset.flclub, off=S.flOff||(S.flOff=new Set());
-      if(off.has(c)) off.delete(c); else { const vis=[...d.parentElement.querySelectorAll('[data-flclub]')].filter(b=>!off.has(b.dataset.flclub)); if(vis.length>1) off.add(c); }
+      if(off.has(c)){ off.delete(c); S.flRe=c; renderFlight(); S.flRe=null; return; } else { const vis=[...d.parentElement.querySelectorAll('[data-flclub]')].filter(b=>!off.has(b.dataset.flclub)); if(vis.length>1) off.add(c); }
       renderFlight(); return; } }
   { const d=e.target.closest('[data-dispclub]'); if(d){ const c=d.dataset.dispclub, off=S.dispOff||(S.dispOff=new Set());
       if(off.has(c)) off.delete(c); else { const vis=[...d.parentElement.querySelectorAll('[data-dispclub]')].filter(b=>!off.has(b.dataset.dispclub)); if(vis.length>1) off.add(c); }
@@ -1368,16 +1368,17 @@ function renderFlight(){
   s+=`<line x1="${L}" x2="${w-R}" y1="${y(0)}" y2="${y(0)}" stroke="var(--ink2)"/>`;
   s+=`<text x="${L+4}" y="${T+4}">apex, yds</text><text x="${w-R}" y="${T+4}" text-anchor="end">carry, yds</text>`;
   let marks='', selMark='';
-  let fi=0; const stag=Math.max(4,Math.min(14,1400/Math.max(1,sh.length)));
-  for(const p of sh){ const f=flightShape(p), col=colorOf(p.club), N=18; const pts=[]; const dl=(fi++*stag).toFixed(0);
+  const reAn=S.flRe&&!flAnim&&!matchMedia('(prefers-reduced-motion: reduce)').matches?S.flRe:null;
+  let fi=0, ai=0; const stag=Math.max(4,Math.min(14,1400/Math.max(1,reAn?sh.filter(q=>q.club===reAn).length:sh.length)));
+  for(const p of sh){ const f=flightShape(p), col=colorOf(p.club), N=18; const pts=[]; const an=flAnim||(reAn&&p.club===reAn); fi++; const dl=(an?ai++*stag:0).toFixed(0);
     for(let i=0;i<=N;i++){ const u=i/N; pts.push([f.xa*u, f.A*(1-(1-u)**2)]); }
     for(let i=1;i<=N;i++){ const u=i/N; pts.push([f.xa+(f.C-f.xa)*u, f.A*(1-u**2)]); }
-    s+=`<path d="M${pts.map(([a,b])=>x(a).toFixed(1)+','+y(b).toFixed(1)).join('L')}" fill="none" stroke="${col}" stroke-width="1.3" stroke-opacity=".6" stroke-dasharray="${DASH[isWedge(p.club)?p.len:'full']}" class="fl"${flAnim&&f.C>0?` clip-path="url(#flc${fi})"`:''}/>`;
-    if(flAnim&&f.C>0){ const W0=x(f.C)-x(0); s+=`<clipPath id="flc${fi}"><rect x="${(x(0)-3).toFixed(1)}" y="0" height="${h}" width="0"><animate attributeName="width" from="3" to="${(W0+3).toFixed(1)}" begin="${dl}ms" dur="1100ms" fill="freeze"/></rect></clipPath>`; }
+    s+=`<path d="M${pts.map(([a,b])=>x(a).toFixed(1)+','+y(b).toFixed(1)).join('L')}" fill="none" stroke="${col}" stroke-width="1.3" stroke-opacity=".6" stroke-dasharray="${DASH[isWedge(p.club)?p.len:'full']}" class="fl"${an&&f.C>0?` clip-path="url(#flc${fi})"`:''}/>`;
+    if(an&&f.C>0){ const W0=x(f.C)-x(0); s+=`<clipPath id="flc${fi}"><rect x="${(x(0)-3).toFixed(1)}" y="0" height="${h}" width="0"><animate attributeName="width" from="3" to="${(W0+3).toFixed(1)}" begin="${dl}ms" dur="1100ms" fill="freeze"/></rect></clipPath>`; }
     const tip=`${p.club}${isWedge(p.club)&&p.len!=='full'?' · '+LENS[p.len]:''} · ${p.day}\nCarry ${fmt(p.carry)} yds\nApex ${fmt(p.apex)} yds`+(p.launch!=null?`\nLaunch ${fmt(p.launch)}°`:'')+`\nEst. landing angle ${fmt(f.land,0)}°`;
     const on=S.topShot===p.id; if(on) selMark=`<path d="M${pts.map(([a,b])=>x(a).toFixed(1)+','+y(b).toFixed(1)).join('L')}" fill="none" stroke="${col}" stroke-width="2.5" stroke-dasharray="2 3"/><circle cx="${x(f.xa)}" cy="${y(f.A)}" r="8" fill="none" stroke="var(--ink)" stroke-width="2"/>`;
     const sk=isWedge(p.club)?p.len:'full';
-    if(flAnim&&f.C>0){ const FD=1100, up=pts.slice(0,N+1).map(([a,b])=>[x(a),y(b)]); let cum=[0];
+    if(an&&f.C>0){ const FD=1100, up=pts.slice(0,N+1).map(([a,b])=>[x(a),y(b)]); let cum=[0];
       for(let i=1;i<up.length;i++) cum.push(cum[i-1]+Math.hypot(up[i][0]-up[i-1][0],up[i][1]-up[i-1][1]));
       const tot=cum[cum.length-1]||1, kt=up.map((_,i)=>(i/N).toFixed(4)).join(';'), kp=cum.map(c=>Math.min(1,c/tot).toFixed(4)).join(';');
       const dur=Math.max(60,FD*f.xa/f.C).toFixed(0);
@@ -1396,7 +1397,7 @@ function renderFlight(){
   { const keys=['half','third'].filter(l=>lens.includes(l)); const kx=w-R-38, ky=h-B-16-(keys.length-1)*16;
     keys.forEach((l,i)=>{ const yy=ky+i*16; marks+=shape(l,kx+4,yy-4,'var(--ink2)',false,4)+`<text x="${kx+16}" y="${yy}" class="tlab">${LENS[l]}</text>`; }); }
   el.innerHTML=s+marks+selMark+'</svg>';
-  if(flAnim){ const sv=el.querySelector('svg'); try{ sv.setCurrentTime(0); sv.unpauseAnimations(); }catch(e){} }
+  if(flAnim||reAn){ const sv=el.querySelector('svg'); try{ sv.setCurrentTime(0); sv.unpauseAnimations(); }catch(e){} }
 }
 
 /* ---------- top view: club path & face ---------- */
