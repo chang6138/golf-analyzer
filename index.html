@@ -303,7 +303,7 @@ td select.clubsel{font-size:.8rem}
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v214 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
+      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v215 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
       <div class="titlerow">
         <h1>Golf Analyzer<button type="button" class="qhelp hq" id="appq" aria-label="About Golf Analyzer" data-tip="Reads every export in the Golf Data Google Drive folder (R10 and S72). Upload a new CSV there, then press Sync with Drive.">?</button></h1>
         <div class="syncbox"><button class="primary" id="refresh" type="button">Sync with Drive</button><span class="status" id="status" role="status">Starting…</span></div>
@@ -859,7 +859,7 @@ function renderDisp(){
   const allClubs=clubOrder().filter(c=>base.some(s=>s.club===c));
   const sh=base.filter(s=>!off.has(s.club));
   const clubs=[...new Set(sh.map(s=>s.club))]; const lens=LEN.filter(l=>l!=='full'&&sh.some(s=>isWedge(s.club)&&s.len===l));
-  $('disp-legend').innerHTML='<div class="lgrow">'+allClubs.map(c=>`<button type="button" class="lgbtn${off.has(c)?' off':''}" data-dispclub="${esc(c)}" aria-pressed="${!off.has(c)}" title="${off.has(c)?'Show':'Hide'} ${esc(c)} in Dispersion"><span class="swatch" style="background:${colorOf(c)}"></span>${esc(c)}</button>`).join('')+'</div>'+(lens.length?'<div class="lgrow">'+lens.map(l=>`<span>${shapeIcon(l)}${LENS[l]}</span>`).join('')+'</div>':'');
+  $('disp-legend').innerHTML='<div class="lgrow">'+allClubs.map(c=>`<button type="button" class="lgbtn${off.has(c)?' off':''}" data-dispclub="${esc(c)}" aria-pressed="${!off.has(c)}" title="${off.has(c)?'Show':'Hide'} ${esc(c)} in Dispersion"><span class="swatch" style="background:${colorOf(c)}"></span>${esc(c)}</button>`).join('')+'</div>';
   $('ell-tog').innerHTML=`<button type="button" class="chip" data-ell="1" aria-pressed="${S.showEll!==false}">${S.showEll!==false?'Hide':'Show'} dispersion</button>`;
   if(!sh.length){ el.innerHTML='<div class="empty">No shots with carry and offline data in the current filter.</div>'; return; }
   const w=W(el), L=40, R=12, T=10, B=30;
@@ -887,6 +887,10 @@ function renderDisp(){
     const tip=`${p.club} · ${LENS[p.len]} · ${p.day}\nCarry ${fmt(p.carry)} yds\nOffline ${fmt(Math.abs(p.offline))} ${p.offline<0?'L':'R'}\nClub ${fmt(p.clubSpeed)} mph`;
     const on=S.topShot===p.id; s+=`<g style="--i:${Math.min(sh.indexOf(p),180)}" data-tip="${esc(tip)}" data-sid="${esc(p.id)}"><circle cx="${x(p.offline)}" cy="${y(p.carry)}" r="9" fill="transparent"/>${on?`<circle cx="${x(p.offline)}" cy="${y(p.carry)}" r="9" fill="none" stroke="var(--ink)" stroke-width="2"/>`:''}${shape(p.len,x(p.offline),y(p.carry),colorOf(p.club),false,on?6:4.5)}</g>`;
   }
+  // swing-length key inside the chart, bottom right: 1/2 above, 1/3 at the bottom
+  { const keys=['half','third'].filter(l=>lens.includes(l)); if(keys.length){ const kx=w-R-62, ky=h-B-10-(keys.length-1)*18;
+      s+=`<rect x="${kx-8}" y="${ky-12}" width="66" height="${keys.length*18+6}" rx="6" fill="var(--panel)" fill-opacity=".85" stroke="var(--line)"/>`;
+      keys.forEach((l,i)=>{ const yy=ky+i*18; s+=shape(l,kx+4,yy-4,'var(--ink2)',false,4)+`<text x="${kx+16}" y="${yy}" class="tlab">${LENS[l]}</text>`; }); } }
   el.innerHTML=s+'</svg>';
 }
 
