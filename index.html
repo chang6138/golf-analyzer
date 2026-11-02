@@ -49,7 +49,7 @@ h3{font-size:1.15rem}
 .linkbar{flex:1 1 100%;margin-top:4px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:8px 10px}
 .linkbar input{flex:1 1 280px;min-width:0;font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel2);color:var(--ink)}
 .linkbar .status{flex:1 1 100%;font-size:.84rem}.linkbar .status:empty{display:none}
-header.top .brand{flex:1 1 100%}.titlerow{display:flex;flex-direction:column;align-items:flex-start;gap:8px}.syncbox{display:flex;flex-direction:column;align-items:flex-start;gap:6px}.syncbox .status{font-size:.84rem}.toprow{display:flex;justify-content:space-between;gap:2px 12px;flex-wrap:wrap}.toprow .toprt{margin-left:auto;display:inline-flex;flex-direction:column;align-items:flex-end;gap:8px}
+header.top .brand{flex:1 1 100%}.titlerow{display:flex;flex-direction:column;align-items:flex-start;gap:8px}.h1row{display:flex;justify-content:space-between;align-items:center;gap:8px 14px;flex-wrap:wrap;align-self:stretch}.h1row .swrow{margin-left:auto}.syncbox{display:flex;flex-direction:column;align-items:flex-start;gap:6px}.syncbox .status{font-size:.84rem}.toprow{display:flex;justify-content:space-between;gap:2px 12px;flex-wrap:wrap}.toprow .toprt{margin-left:auto;display:inline-flex;flex-direction:column;align-items:flex-end;gap:8px}
 .swrow{display:flex;gap:14px;align-items:center}
 .sw{display:inline-flex;align-items:center;gap:7px;padding:2px 0;border:0;background:none;cursor:pointer;font:600 .74rem var(--f-body);letter-spacing:.02em;text-transform:none;color:var(--muted)}
 .sw .swl{transition:color .2s ease}.sw[data-on="0"] .swl[data-side="0"],.sw[data-on="1"] .swl[data-side="1"]{color:var(--ink)}
@@ -314,12 +314,15 @@ td select.clubsel{font-size:.8rem}
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v228 · updated Nov 2, 2026</span><span class="swrow">
+      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v229 · updated Nov 2, 2026</span></span></span>
+      <div class="titlerow">
+        <div class="h1row">
+          <h1>Golf Analyzer<button type="button" class="qhelp hq" id="appq" aria-label="About Golf Analyzer" data-tip="Reads every export in the Golf Data Google Drive folder (R10 and S72). Upload a new CSV there, then press Sync with Drive.">?</button></h1>
+          <span class="swrow">
         <button type="button" class="sw" id="themesw" role="switch" aria-label="Dark mode"><span class="swl" data-side="0">Dark</span><span class="swt"><span class="swk"></span></span><span class="swl" data-side="1">Light</span></button>
         <button type="button" class="sw" id="langbtn" role="switch" aria-label="Language"><span class="swl" data-side="0">EN</span><span class="swt"><span class="swk"></span></span><span class="swl" data-side="1">中文</span></button>
-      </span></span></span>
-      <div class="titlerow">
-        <h1>Golf Analyzer<button type="button" class="qhelp hq" id="appq" aria-label="About Golf Analyzer" data-tip="Reads every export in the Golf Data Google Drive folder (R10 and S72). Upload a new CSV there, then press Sync with Drive.">?</button></h1>
+      </span>
+        </div>
         <div class="syncbox"><button class="primary" id="refresh" type="button">Sync with Drive</button><span class="status" id="status" role="status">Starting…</span></div>
       </div>
     </div>
