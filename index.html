@@ -269,7 +269,7 @@ td select.clubsel{font-size:.8rem}
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v210 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
+      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v211 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
       <div class="titlerow">
         <h1>Golf Analyzer<button type="button" class="qhelp hq" id="appq" aria-label="About Golf Analyzer" data-tip="Reads every export in the Golf Data Google Drive folder (R10 and S72). Upload a new CSV there, then press Sync with Drive.">?</button></h1>
         <div class="syncbox"><button class="primary" id="refresh" type="button">Sync with Drive</button><span class="status" id="status" role="status">Starting…</span></div>
@@ -469,11 +469,11 @@ function kmeans3(vals){
 /*PURE-END*/
 
 /* ---------- state ---------- */
-const DRIVE='Google Drive', FOLDER_NAME='Golf R10 Data';
+const DRIVE='Google Drive', FOLDER_NAME='Golf Data';
 const FOLDER_ID='1Zt9EWachfalSH_wXC-cSGmhlIocsadvP'; // the data folder is loaded directly by its ID; searching by name is only a fallback
 const DATA_FROM=''; // no start-date cut-off: every session in the folder is used
 const WEEK=604800000;
-/* ---------- shared review choices (one small file in Golf R10 Data, read by every version) ---------- */
+/* ---------- shared review choices (one small file in Golf Data, read by every version) ---------- */
 const SYNC_KEYS={'r10:excluded':'excl','r10:rvDismissed':'rvDis','r10:keepClub':'keep','r10:clubOver':'clubOver','r10:cutoffs':'cut','r10:s72excl':'swExcl','r10:s72club':'swClub'};
 const STATE_NAME='Golf Analyzer State Setting'; // the saved file's name; older copies were named golf-analyzer-state-<time>.json
 const STATE_RE=/^golf-analyzer-state-(\d+)\.json$/;
@@ -1643,7 +1643,7 @@ const SWCOLS=[['t','When','l'],['club','Club','l'],['tempo','Tempo'],['backTime'
 function swEmptyMsg(){
   const all=swingsLog();
   if(!all.length){ const bad=(S.failed||[]).filter(n=>/DrivingRange|S72|swing/i.test(n));
-    return `No Approach S72 swing data loaded yet.`+(bad.length?` These files couldn’t be read: ${bad.map(esc).join(', ')}. Press Sync with Drive to try again.`:` Put the watch’s swing export in your Golf R10 Data folder, then press Sync with Drive.`); }
+    return `No Approach S72 swing data loaded yet.`+(bad.length?` These files couldn’t be read: ${bad.map(esc).join(', ')}. Press Sync with Drive to try again.`:` Put the watch’s swing export in your Golf Data folder, then press Sync with Drive.`); }
   const by={}; for(const s of all) by[s.day]=(by[s.day]||0)+1;
   const days=Object.entries(by).map(([d,n])=>`${shortDay(d)} (${n})`).join(', ');
   const outside=(S.f.from||S.f.to)&&!all.some(s=>(!S.f.from||s.day>=S.f.from)&&(!S.f.to||s.day<=S.f.to));
@@ -1767,7 +1767,7 @@ async function listFolder(fresh){
 async function syncDrive(fresh){
   if(S.busy) return; S.busy=true; $('refresh').disabled=true;
   try{
-    setStatus('Opening the Golf R10 Data folder…');
+    setStatus('Opening the Golf Data folder…');
     const files=await listFolder(fresh); S.files=files; S.failed=[];
     let done=0; const todo=files.slice();
     setStatus(`Reading ${files.length} files…`);
@@ -1905,7 +1905,7 @@ async function loadDir(h){
     else if(isStateFile(name)){ const m=name.match(STATE_RE), n=m?+m[1]:(await entry.getFile()).lastModified; if(!st||n>st.n) st={n,entry}; } }
   if(st&&st.n>localStateAt()){ try{ applyRemote(JSON.parse(await (await st.entry.getFile()).text())); }catch(e){} }
   files.sort((a,b)=>a.name.localeCompare(b.name));
-  if(!files.length){ setStatus(`No CSV files in ${h.name}. Choose your Golf R10 Data folder.`,true); return; }
+  if(!files.length){ setStatus(`No CSV files in ${h.name}. Choose your Golf Data folder.`,true); return; }
   await loadFiles(files,h.name);
 }
 async function pickFolder(){
@@ -1922,7 +1922,7 @@ async function localRefresh(gesture){
 }
 async function localBoot(){
   $('refresh').textContent='Sync from Drive'; $('pick').textContent='Choose Drive folder'; $('pick').hidden=false;
-  $('appq').dataset.tip='Reads every R10 export in your synced Golf R10 Data folder. New files are picked up whenever you come back to this window.';
+  $('appq').dataset.tip='Reads every R10 export in your synced Golf Data folder. New files are picked up whenever you come back to this window.';
   $('pick').addEventListener('click',pickFolder);
   $('dirinput').addEventListener('change',e=>{ const fl=[...e.target.files].filter(f=>/\.csv$/i.test(f.name)); if(fl.length) loadFiles(fl,'the chosen folder'); e.target.value=''; });
   addEventListener('focus',()=>{ if(DIR&&Date.now()-lastLocal>10000) localRefresh(false); });
@@ -1932,7 +1932,7 @@ async function localBoot(){
   if(DIR){ let p='prompt'; try{ p=await DIR.queryPermission({mode:'readwrite'}); }catch(e){}
     if(p==='granted') return localRefresh(false);
     setStatus(`Press “Sync from Drive” to read ${DIR.name}.`+(S.shots.length?` Showing ${S.shots.length} shots from last time.`:''));
-  } else setStatus('Press “Choose Drive folder” and pick Golf R10 Data inside your Google Drive folder (usually G:\\My Drive\\Golf R10 Data).');
+  } else setStatus('Press “Choose Drive folder” and pick Golf Data inside your Google Drive folder (usually G:\\My Drive\\Golf Data).');
 }
 
 
