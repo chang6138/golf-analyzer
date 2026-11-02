@@ -304,7 +304,7 @@ td select.clubsel{font-size:.8rem}
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v221 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
+      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v222 · updated Nov 2, 2026</span><button type="button" class="langbtn" id="langbtn">中文</button></span></span>
       <div class="titlerow">
         <h1>Golf Analyzer<button type="button" class="qhelp hq" id="appq" aria-label="About Golf Analyzer" data-tip="Reads every export in the Golf Data Google Drive folder (R10 and S72). Upload a new CSV there, then press Sync with Drive.">?</button></h1>
         <div class="syncbox"><button class="primary" id="refresh" type="button">Sync with Drive</button><span class="status" id="status" role="status">Starting…</span></div>
@@ -1384,8 +1384,8 @@ function renderFlight(){
       for(let i=1;i<up.length;i++) cum.push(cum[i-1]+Math.hypot(up[i][0]-up[i-1][0],up[i][1]-up[i-1][1]));
       const tot=cum[cum.length-1]||1, kt=up.map((_,i)=>(i/N).toFixed(4)).join(';'), kp=cum.map(c=>Math.min(1,c/tot).toFixed(4)).join(';');
       const dur=Math.max(60,FD*f.xa/f.C).toFixed(0);
-      marks+=`<g class="mk" data-tip="${esc(tip)}" data-sid="${esc(p.id)}"><circle cx="${x(f.xa)}" cy="${y(f.A)}" r="8" fill="transparent"/><g visibility="hidden"><set attributeName="visibility" to="visible" begin="${dl}ms" fill="freeze"/><animateMotion begin="${dl}ms" dur="${dur}ms" fill="freeze" calcMode="linear" keyTimes="${kt}" keyPoints="${kp}" path="M${up.map(([a,b])=>a.toFixed(1)+','+b.toFixed(1)).join('L')}"/>${shape(sk,0,0,col,false,3.4)}</g><circle cx="${x(f.C)}" cy="${y(0)}" r="0" fill="${col}"><animate attributeName="r" values="0;3.6;2.4" begin="${+dl+FD}ms" dur="300ms" fill="freeze"/></circle></g>`; }
-    else marks+=`<g class="mk" data-tip="${esc(tip)}" data-sid="${esc(p.id)}"><circle cx="${x(f.xa)}" cy="${y(f.A)}" r="8" fill="transparent"/>${shape(sk,x(f.xa),y(f.A),col,false,3.4)}<circle cx="${x(f.C)}" cy="${y(0)}" r="2.4" fill="${col}"/></g>`; }
+      marks+=`<g class="mk" data-tip="${esc(tip)}" data-sid="${esc(p.id)}"><circle cx="${x(f.xa)}" cy="${y(f.A)}" r="8" fill="transparent"/><g visibility="hidden"><set attributeName="visibility" to="visible" begin="${dl}ms" fill="freeze"/><animateMotion begin="${dl}ms" dur="${dur}ms" fill="freeze" calcMode="linear" keyTimes="${kt}" keyPoints="${kp}" path="M${up.map(([a,b])=>a.toFixed(1)+','+b.toFixed(1)).join('L')}"/>${shape(sk,0,0,col,false,3.4)}</g></g>`; }
+    else marks+=`<g class="mk" data-tip="${esc(tip)}" data-sid="${esc(p.id)}"><circle cx="${x(f.xa)}" cy="${y(f.A)}" r="8" fill="transparent"/>${shape(sk,x(f.xa),y(f.A),col,false,3.4)}</g>`; }
   $('flight-tog').innerHTML=`<button type="button" class="chip" data-typ="1" aria-pressed="${!!S.showTyp}">Typical Flight</button>`;
   // toggle on: add a solid "typical flight" per club card (median carry, average apex and launch)
   if(S.showTyp){ for(const g of groupList(filtered()).filter(g=>!foff.has(g.club))){ const c=median(vals(g.shots,'carry')), A=stat(g.shots,'apex').m; if(!(c>0&&A>0)) continue;
