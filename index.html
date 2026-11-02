@@ -143,7 +143,8 @@ section.card.collapsed{gap:0}
 .seg button{border:0;border-radius:0;padding:5px 10px;background:var(--panel);color:var(--ink2)}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 .selq{display:inline-flex;align-items:center;gap:6px;min-width:0}.selq select{min-width:0}
-.cardfoot{display:flex;justify-content:flex-end}
+.cardfoot{display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-wrap:wrap}.pronote{margin-right:auto;color:var(--muted);font-size:.8rem}
+.kv em.pro,.prohero{font:500 .72rem var(--f-mono);font-style:normal;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:1px}.kv em.pro span,.prohero span{color:var(--accent);font-family:var(--f-body);font-weight:700;font-size:.68rem;letter-spacing:.04em;text-transform:uppercase}.kv em.pro s,.prohero s{text-decoration:none;color:var(--ink2)}.prohero{margin-top:-4px}
 .progfoot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:10px 16px}
 .progfoot.flfoot{display:grid;grid-template-columns:1fr auto 1fr;align-items:center}.flfoot>.progctl{justify-self:end}
 @media (max-width:560px){.progfoot.flfoot{grid-template-columns:1fr}.flfoot>span{display:none}.flfoot>.progctl{justify-self:center}}.progctl{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px;margin-left:auto}
@@ -315,7 +316,7 @@ td select.clubsel{font-size:.8rem}
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v234 · updated Nov 2, 2026</span></span></span>
+      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v235 · updated Nov 2, 2026</span></span></span>
       <div class="titlerow">
         <div class="h1row">
           <h1>Golf Analyzer<button type="button" class="qhelp hq" id="appq" aria-label="About Golf Analyzer" data-tip="Reads every export in the Golf Data Google Drive folder (R10 and S72). Upload a new CSV there, then press Sync with Drive.">?</button></h1>
@@ -335,7 +336,7 @@ td select.clubsel{font-size:.8rem}
   <section class="card" id="sec-cards">
     <div class="shead"><div><h2>Club Analysis</h2></div></div>
     <div id="cards" style="display:flex;flex-direction:column;gap:14px;min-width:0"></div>
-    <div class="cardfoot"><button type="button" id="an-collapse" data-ancollapse="1">Collapse all</button></div>
+    <div class="cardfoot"><span class="pronote" id="pronote" hidden>PGA Tour averages from TrackMan (2023 season), full swings. No tour figures for apex, offline or wedges past PW.</span><button type="button" class="chip" id="cmp-pro" data-cmppro="1" aria-pressed="false">Compare to Tour</button><button type="button" id="an-collapse" data-ancollapse="1">Collapse all</button></div>
   </section>
 
   <section class="card" id="sec-acc">
@@ -1123,12 +1124,25 @@ function cardImpact(g){
     <div class="inner"><div class="ihead"><h3>Club Path &amp; Face</h3></div>${left}</div>
     <div class="inner"><div class="ihead"><h3>Attack, Launch &amp; Spin</h3></div>${right}</div></div></div>`;
 }
+// PGA Tour averages measured by TrackMan (2023 season, published May 2024): full swings only
+const TOUR={ // clubSpeed mph, ballSpeed mph, launch °, spin rpm, attack °, carry yds
+  D:[115,171,10.4,2545,-0.9,282], '3W':[110,162,9.3,3663,-2.3,249], '5W':[106,156,9.7,4322,-2.5,236], H:[102,149,10.2,4587,-2.4,231],
+  '3i':[100,145,10.3,4404,-2.5,218], '4i':[98,140,10.8,4782,-2.9,209], '5i':[96,135,11.9,5280,-3.4,199], '6i':[94,130,14.0,6204,-3.7,188],
+  '7i':[92,123,16.1,7124,-3.9,176], '8i':[89,118,17.8,8078,-4.2,164], '9i':[87,112,20.0,8793,-4.3,152], PW:[84,104,23.7,9316,-4.7,142]};
+function tourOf(club,len){ if(len!=='full') return null; const c=String(club).trim(); let k=null;
+  if(/^dr/i.test(c)) k='D'; else if(/^[34]W$/i.test(c)) k='3W'; else if(/^[5-9]W$/i.test(c)) k='5W'; else if(/^\d?H$/i.test(c)||/hybrid/i.test(c)) k='H';
+  else if(/^[3-9]i$/i.test(c)) k=c[0]+'i'; else if(/^PW$/i.test(c)) k='PW';
+  const t=k&&TOUR[k]; return t?{clubSpeed:t[0],ballSpeed:t[1],launch:t[2],spin:t[3],attack:t[4],carry:t[5],smash:t[1]/t[0]}:null; }
 function renderCards(){
   const el=$('cards'); const gs=groupList(filtered());
   if(!gs.length){ el.innerHTML='<div class="empty">No shots in the current filter.</div>'; return; }
   const card=g=>{
     const sh=g.shots, C=stat(sh,'carry'); const sess=new Set(sh.map(s=>s.day)).size;
-    const k=(key,lab,d,sgn,u='')=>{ const v=stat(sh,key).m; return `<div><b>${sgn?fmtS(v,d):fmt(v,d)}${v!=null&&u?(u==='°'?u:`<i class="ku">${u}</i>`):''}</b><span>${lab}</span></div>`; };
+    const pro=S.cmpPro?tourOf(g.club,g.len):null;
+    // with Compare to Tour on: the tour average under each number, and how far you are from it
+    const pv=(key,v,d,sgn)=>{ if(!S.cmpPro) return ''; const t=pro&&pro[key]; if(t==null) return `<em class="pro">—</em>`;
+      const df=v!=null?v-t:null; return `<em class="pro"><span>Tour</span> ${sgn?fmtS(t,d):fmt(t,Number.isInteger(t)?0:d)}${df!=null?` <s>${df>=0?'+':'−'}${fmt(Math.abs(df),d)}</s>`:''}</em>`; };
+    const k=(key,lab,d,sgn,u='')=>{ const v=stat(sh,key).m; return `<div><b>${sgn?fmtS(v,d):fmt(v,d)}${v!=null&&u?(u==='°'?u:`<i class="ku">${u}</i>`):''}</b><span>${lab}</span>${pv(key,v,d,sgn)}</div>`; };
     const tm=median(vals(sh,'total'));
     const {A,D}=analyzeGroup(g,gs);
     const key=g.club+'|'+g.len, open=!!(S.anOpen||{})[key];
@@ -1137,6 +1151,7 @@ function renderCards(){
         <button type="button" class="anbtn" data-antoggle="${esc(key)}" aria-expanded="${open}">Analysis ${open?'◂':'▸'}</button>
         <div class="ttl"><h3><span class="swatch" style="background:${colorOf(g.club)}"></span>${esc(g.len==='full'?g.club:glabel(g))}</h3><span class="eyebrow">${sh.length} shots · ${sess} session${sess>1?'s':''}</span></div>
         <div class="hero"><span class="v">${fmt(median(vals(sh,'carry')))}</span><span class="hstack"><span class="sub mono">±${fmt(C.s)}</span><span class="u">yds median carry</span></span></div>
+        ${S.cmpPro?(pro?`<div class="prohero"><span>Tour</span> ${fmt(pro.carry,0)} yds carry · ${(()=>{ const d=median(vals(sh,'carry'))-pro.carry; return `<s>${d>=0?'+':'−'}${fmt(Math.abs(d))}</s>`; })()}</div>`:`<div class="prohero">No tour average for ${g.len==='full'?'this club':'partial swings'}</div>`):''}
         <div class="kv">${k('smash','Smash',2)}${k('clubSpeed','Club speed',1,0,'mph')}${k('apex','Apex',1,0,'yds')}${k('launch','Launch',1,0,'°')}${k('spin','Spin',0,0,'rpm')}${k('ballSpeed','Ball speed',1,0,'mph')}${k('offline','Offline',1,1,'yds')}${k('attack','Attack',1,1,'°')}</div>
       </div>
       <div class="apanel"${open?'':' hidden'}><ul class="tgts anl"><li class="tgh">Analysis</li>${A.map(([c,l,t])=>`<li><b>${esc(l)}</b><span class="tgt"><span class="tg ${c==='good'?'ok':c==='bad'?'bad':'down'}">${c==='good'?'✓':c==='bad'?'✕':'!'}</span> ${esc(t)}</span></li>`).join('')}</ul></div>
@@ -1148,6 +1163,7 @@ function renderCards(){
   let out=others.length?`<div class="cards">${others.map(card).join('')}</div>`:'';
   for(const c of clubOrder().filter(isWedge)){ const row=gs.filter(g=>g.club===c).sort((a,b)=>['full','half','third'].indexOf(a.len)-['full','half','third'].indexOf(b.len)); if(row.length) out+=`<div class="cardrow">${row.map(card).join('')}</div>`; }
   el.innerHTML=out; layoutCards();
+  { const b=$('cmp-pro'); b.setAttribute('aria-pressed',!!S.cmpPro); b.textContent=S.cmpPro?'Hide Tour':'Compare to Tour'; $('pronote').hidden=!S.cmpPro; }
   if(S.anim&&!S.countedUp&&gs.length){ S.countedUp=true; const els=[...el.querySelectorAll('.hero .v')], t0=performance.now();
     const fin=els.map(e=>parseFloat(e.textContent)); const step=t=>{ const k=Math.min(1,(t-t0)/800), ease=1-Math.pow(1-k,3);
       els.forEach((e,i)=>{ if(isFinite(fin[i])) e.textContent=(fin[i]*ease).toFixed(1); }); if(k<1) requestAnimationFrame(step); }; requestAnimationFrame(step); }
@@ -1929,7 +1945,7 @@ const ZH_RULES=[ // whole sentences that carry numbers
   [/now (.+?) · aim (.+?) to (.+)$/g,'目前 $1 · 目標 $2 至 $3'],
   [/(\d+) shots · (\d+) sessions?/g,'$1 球 · $2 次練習'],
   [/Page (\d+) of (\d+)/g,'第 $1 頁，共 $2 頁'],
-  [/Hide (\S+) in Dispersion/g,'在落點分佈隱藏 $1'],[/^Show only (\S+)$/g,'只顯示 $1'],[/^Show every club$/g,'顯示所有球桿'],[/Hide (\S+) in Ball Flight/g,'在球飛行軌跡隱藏 $1'],[/Show (\S+) in Ball Flight/g,'在球飛行軌跡顯示 $1'],[/Show (\S+) in Dispersion/g,'在落點分佈顯示 $1'],
+  [/Hide (\S+) in Dispersion/g,'在落點分佈隱藏 $1'],[/^Show only (\S+)$/g,'只顯示 $1'],[/^Show every club$/g,'顯示所有球桿'],[/^ (\S+) yds carry · $/g,' $1 碼飛行距離 · '],[/^No tour average for this club$/g,'此球桿沒有巡迴賽平均'],[/^No tour average for partial swings$/g,'部分揮桿沒有巡迴賽平均'],[/^PGA Tour averages from TrackMan \(2023 season\), full swings\. No tour figures for apex, offline or wedges past PW\.$/g,'PGA 巡迴賽平均（TrackMan，2023 球季），全揮桿。沒有最高點、偏移及 PW 以外挖起桿的巡迴賽數據。'],[/Hide (\S+) in Ball Flight/g,'在球飛行軌跡隱藏 $1'],[/Show (\S+) in Ball Flight/g,'在球飛行軌跡顯示 $1'],[/Show (\S+) in Dispersion/g,'在落點分佈顯示 $1'],
   [/Average of (\d+) swings?/g,'$1 次揮桿的平均'],[/(\d+) matched to R10 shots by time/g,'$1 次依時間對應 R10 擊球'],
   [/(\d+) excluded \(struck through\)/g,'$1 筆已排除（刪除線）'],
   [/(\d+) shots in the current filter/g,'目前篩選中有 $1 球'],[/(\d+) S72 swings in the current filter/g,'目前篩選中有 $1 次 S72 揮桿'],
@@ -1938,7 +1954,7 @@ const ZH_RULES=[ // whole sentences that carry numbers
 ];
 const ZH_TYPE={'driver':'一號木','fairway wood':'球道木','hybrid':'混合桿','short iron':'短鐵','long iron':'長鐵','wedge':'挖起桿'};
 const ZH_EXACT={ // whole labels (short words that would be unsafe to replace inside sentences)
-  'Check Impact':'查看擊球瞬間',  'Dark':'深色','Light':'淺色',  'All':'全部',
+  'Compare to Tour':'與職業巡迴賽比較','Hide Tour':'隱藏巡迴賽','Tour':'巡迴賽',  'Check Impact':'查看擊球瞬間',  'Dark':'深色','Light':'淺色',  'All':'全部',
   'Up':'向上','Down':'向下','Level':'水平','Low':'偏低','High':'偏高','Normal':'正常','Partial':'部分揮桿','Open':'開放','Closed':'關閉','Square':'正對','Neutral':'中性',
   'Fade':'右曲','Draw':'左曲','Slice':'大右曲','Hook':'大左曲','Straight':'直球','Push':'右推','Pull':'左拉','Full':'全揮','Top':'頂點','Top:':'頂點：','Edit':'編輯','Cancel':'取消',
   'Clear':'清除','Next':'下一頁','Previous':'上一頁','Exclude':'排除','Include':'納入','Dismiss':'略過','to':'至','Club':'球桿','When':'時間','Loaded':'力道','Why':'原因',
@@ -2022,7 +2038,7 @@ function i18nNode(root){
 }
 function i18nAll(){ i18nBusy=true; try{ i18nNode(document.body); }finally{ i18nBusy=false; }
   document.documentElement.lang=S.lang==='zh'?'zh-Hant':'en'; const b=$('langbtn'); if(b){ b.dataset.on=S.lang==='zh'?'1':'0'; b.setAttribute('aria-checked',S.lang==='zh'); } }
-S.lang=store.get('r10:lang','en');
+S.lang=store.get('r10:lang','en'); S.cmpPro=store.get('r10:cmpPro',false);
 new MutationObserver(ms=>{ if(i18nBusy||S.lang!=='zh') return; i18nBusy=true;
   try{ for(const m of ms){ if(m.type==='childList') m.addedNodes.forEach(i18nNode); else if(m.type==='characterData') i18nNode(m.target); else if(m.type==='attributes') i18nNode(m.target); } }finally{ i18nBusy=false; } })
   .observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:I18N_ATTRS});
@@ -2036,7 +2052,8 @@ S.anOpen=store.get('r10:anOpen',{});
 S.showEll=store.get('r10:showEll',true);
 S.showTyp=store.get('r10:showTyp',false);
 S.swExcl=store.get('r10:s72excl',{}); S.swClub=store.get('r10:s72club',{}); S.swSort={k:'t',d:-1}; S.swPage=0;
-document.addEventListener('click',e=>{ if(e.target.closest('[data-ancollapse]')){ S.anOpen={}; store.set('r10:anOpen',S.anOpen); renderCards(); return; }
+document.addEventListener('click',e=>{ if(e.target.closest('[data-cmppro]')){ S.cmpPro=!S.cmpPro; store.set('r10:cmpPro',S.cmpPro); renderCards(); return; }
+  if(e.target.closest('[data-ancollapse]')){ S.anOpen={}; store.set('r10:anOpen',S.anOpen); renderCards(); return; }
   let b=e.target.closest('[data-antoggle]');
   // clicking anywhere on a club card opens/closes it (not when selecting text)
   if(!b){ const card=e.target.closest('#cards .acard'); if(card&&!e.target.closest('a,select,input,[data-tip]')&&!String(getSelection?getSelection():'')) b=card.querySelector('[data-antoggle]'); }
