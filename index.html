@@ -318,7 +318,7 @@ td select.clubsel{font-size:.8rem}
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v237 · updated Nov 4, 2026</span></span></span>
+      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v238 · updated Nov 4, 2026</span></span></span>
       <div class="titlerow">
         <div class="h1row">
           <h1>Golf Analyzer<button type="button" class="qhelp hq" id="appq" aria-label="About Golf Analyzer" data-tip="Reads every export in the Golf Data Google Drive folder (R10 and S72). Upload a new CSV there, then press Sync with Drive.">?</button></h1>
@@ -652,6 +652,7 @@ function derive(){
   for(const s of S.shots){ s.manual=!!S.clubOver[s.id]; if(s.manual){ s.club=S.clubOver[s.id]; s.junk=false; } }
   S.shots=S.shots.filter(s=>!s.junk);
   S.reviewPool=S.shots.slice();
+  if(!store.get('r10:mishitMig',false)&&S.shots.length){ let ch=false; for(const id of S.mishitKept) if(S.excl[id]===1){ delete S.excl[id]; ch=true; } store.set('r10:mishitMig',true); if(ch) store.set('r10:excluded',S.excl); }
   // impossible smash factor: exclude automatically (0 = you chose to include it)
   let autoEx=false; for(const s of S.shots) if(((s.smash!=null&&s.smash>1.55)||(s.fixTo==='unknown'&&!S.keep[s.id]))&&!(s.id in S.excl)){ S.excl[s.id]=1; autoEx=true; }
   if(autoEx){ syncQuiet=true; store.set('r10:excluded',S.excl); syncQuiet=false; }
@@ -1316,10 +1317,16 @@ function detectFixes(){
   const rmap=new Map();
   for(const s of S.shots) if(s.day<rb&&s.day<from&&s.fixTo){ const k=s.day+'|'+s.labelClub+'|'+s.fixTo; if(!rmap.has(k)) rmap.set(k,{day:s.day,from:s.labelClub,to:s.fixTo,shots:[],round:true}); rmap.get(k).shots.push(s); }
   S.fixBlocks=[...rmap.values(),...S.fixBlocks].sort((a,b)=>a.shots[0].t-b.shots[0].t);
-  // every date: shots that can't physically be the logged club → best-matching club, or excluded if none fits
+  // every date: shots that can't physically be the logged club → best-matching club, or excluded if none fits.
+  // But a swing as fast as that club's usual swing is the right club badly struck (a mishit): it stays as logged.
+  const spd={}; { const g={}; for(const s of S.shots) if(!clubMismatch(s)) (g[s.labelClub]??=[]).push(s);
+    for(const c in g){ const cs=g[c].map(s=>s.clubSpeed).filter(x=>x!=null), bs=g[c].map(s=>s.ballSpeed).filter(x=>x!=null); spd[c]={cs:cs.length>=6?median(cs):null, bs:bs.length>=6?median(bs):null}; } }
+  S.mishitKept=new Set();
   for(const s of S.shots){
     if(s.fixTo||S.clubOver[s.id]) continue;
     const why=clubMismatch(s); if(!why) continue;
+    const u=spd[s.labelClub]||{};
+    if((s.clubSpeed!=null&&u.cs&&s.clubSpeed>=u.cs*.85)||(s.clubSpeed==null&&s.ballSpeed!=null&&u.bs&&s.ballSpeed>=u.bs*.7)){ S.mishitKept.add(s.id); continue; }
     let b=null,bd=Infinity; for(const c in P){ if(c===s.labelClub) continue; const d=clubDist(s,P[c]); if(d!=null&&d<bd){bd=d;b=c;} }
     s.fixWhy=why; s.fixTo=(b&&bd<2)?b:'unknown';
   }
@@ -1345,6 +1352,7 @@ function reviewShots(){
     if(st.launch&&s.launch!=null&&!iss.some(i=>i[0]==='mishit')){ const z=(s.launch-st.launch.m)/st.launch.s; if(Math.abs(z)>3) iss.push(['launch',`Launch ${fmt(s.launch)}° vs usual ${fmt(st.launch.m)}°`]); }
     if(s.fixTo==='unknown') iss.unshift(['club',`Can't be a ${s.labelClub} shot (${s.fixWhy}) and matches no other club; excluded automatically`]);
     else if(s.fixTo&&s.fixTo!=='junk') iss.unshift(['club',s.fixWhy&&!S.keep[s.id]?`Can't be a ${s.labelClub} shot (${s.fixWhy}); looks like ${s.fixTo}, moved to ${s.fixTo}`:S.keep[s.id]?`Looks like ${s.fixTo}; kept as logged (${s.labelClub})`:`Looks like ${s.fixTo}, logged as ${s.labelClub}; moved to ${s.fixTo}`]);
+    if(S.mishitKept&&S.mishitKept.has(s.id)) iss.push(['mishit',`Odd launch for a ${s.club} (${clubMismatch(s)}) but swing speed fits it: kept as a ${s.club} mishit`]);
     if(s.clubSpeed==null) iss.push(['missing','No club speed recorded']);
     if(s.attack==null) iss.push(['noattack','No attack angle recorded']);
     if(iss.length) out.push({s,iss,sev:Math.max(...iss.map(i=>RVTYPES[i[0]][1]))});
@@ -1838,7 +1846,9 @@ function ckRun(kind){
     else if(!miss.length){
       const dOwn=ckDist(kind,r,own), far=[];
       for(const [fk,lab,,u,dd] of C.feat){ const st=own.f[fk], v=r[fk]; if(st&&v!=null){ const z=(v-st.m)/st.s; if(Math.abs(z)>3) far.push(`${lab} ${fmt(v,dd)}${u} vs usual ${fmt(st.m,dd)}${u}`); } }
-      if(dOwn!=null&&(dOwn>2.5||far.length>=2)){
+      const csOK=kind==='r10'&&own.f.clubSpeed&&r.clubSpeed!=null&&Math.abs((r.clubSpeed-own.f.clubSpeed.m)/own.f.clubSpeed.s)<=3;
+      if(csOK&&(dOwn>2.5||far.length>=2)) iss.push(['mishit',`Struck badly but swung like a ${C.name(r)} (club speed ${fmt(r.clubSpeed)} mph): ${far.join('; ')||'several numbers off'}`]);
+      else if(dOwn!=null&&(dOwn>2.5||far.length>=2)){
         let best=null,bd=Infinity; for(const k in base.B){ if(k.split('|')[0]===r.club) continue; const d=ckDist(kind,r,base.B[k]); if(d!=null&&d<bd){ bd=d; best=k; } }
         const like=best&&bd<Math.min(2,dOwn*.6)?` · looks more like ${best.split('|')[0]}${best.split('|')[1]&&best.split('|')[1]!=='full'&&best.split('|')[1]!=='?'?' '+LENS[best.split('|')[1]]:''}`:'';
         iss.push(['club',`Not a typical ${C.name(r)}: ${(far.length?far:['several numbers off at once']).join('; ')}${like}`]);
