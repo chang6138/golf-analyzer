@@ -318,7 +318,7 @@ td select.clubsel{font-size:.8rem}
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v238 · updated Nov 4, 2026</span></span></span>
+      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v239 · updated Nov 4, 2026</span></span></span>
       <div class="titlerow">
         <div class="h1row">
           <h1>Golf Analyzer<button type="button" class="qhelp hq" id="appq" aria-label="About Golf Analyzer" data-tip="Reads every export in the Golf Data Google Drive folder (R10 and S72). Upload a new CSV there, then press Sync with Drive.">?</button></h1>
@@ -1882,10 +1882,11 @@ function renderCk(kind){
   // the nested Abnormalities log: every excluded or flagged row and why
   const cnt={}; for(const x of abn) for(const t of new Set(x.iss.map(i=>i[0]))) cnt[t]=(cnt[t]||0)+1;
   if(st.type!=='all'&&!cnt[st.type]) st.type='all';
-  $('ck-'+kind+'-absum').innerHTML=`${exN?`<span class="alert" role="img" aria-label="Rows excluded">!</span> `:''}Abnormalities · ${exN} excluded, ${abn.length-exN} flagged`;
+  // no warning sign: nothing here needs an action from you (rows are excluded or kept automatically)
+  $('ck-'+kind+'-absum').innerHTML=`Abnormalities · ${exN} excluded, ${abn.length-exN} flagged`;
   const dn=kind==='r10'?(S.dupes||[]).length:0, dfiles=[...new Set((S.dupes||[]).flatMap(d=>[d.s.file,d.of.file]).filter(Boolean))].sort();
   $('ck-'+kind+'-chips').innerHTML=(dn?`<div class="sub" style="flex-basis:100%">${dn} duplicate shot${dn>1?'s':''} appear in ${dfiles.length>1?dfiles.map(esc).join(' and '):esc(dfiles[0]||'two files')} and are counted once.</div>`:'')+`<button type="button" class="chip" data-cktype="${kind}|all" aria-pressed="${st.type==='all'}">All · ${abn.length}</button>`+Object.keys(CKT).filter(t=>cnt[t]).map(t=>`<button type="button" class="chip" data-cktype="${kind}|${t}" aria-pressed="${st.type===t}"><span class="dot" style="background:var(--${CKT[t][1]?'bad':'warn'})"></span>${CKT[t][0]} · ${cnt[t]}</button>`).join('');
-  const list=(st.type==='all'?abn:abn.filter(x=>x.iss.some(i=>i[0]===st.type))).sort((a,b)=>b.out-a.out||b.r.t-a.r.t);
+  const list=(st.type==='all'?abn:abn.filter(x=>x.iss.some(i=>i[0]===st.type))).sort((a,b)=>a.out-b.out||b.r.t-a.r.t);   // kept rows first, excluded below
   const show=st.show||40;
   $('ck-'+kind+'-ab').innerHTML=list.length?`<table><thead><tr><th class="l">When</th><th class="l">Club</th><th class="l">Status</th><th class="l">Reasons</th></tr></thead><tbody>${list.slice(0,show).map(({r,iss,out})=>`<tr class="${out?'dis':''}${isSel(r)?' selrow':''}"${selAttr(r)}><td class="l">${when(r)}</td><td class="l keep">${sw(r.club)}${esc(C.name(r))}</td><td class="l keep"><span class="ckst ${out?'bad':'warn'}">${out?'Excluded':'Kept'}</span></td><td class="l rvwhy">${iss.map(([t,txt])=>`<span class="ckwhy"><b class="${CKT[t][1]?'bad':'warn'}">${CKT[t][0]}</b> ${esc(txt)}</span>`).join('')}</td></tr>`).join('')}</tbody></table>`:`<div class="empty">No abnormalities in the current filter.</div>`;
   $('ck-'+kind+'-more').innerHTML=list.length>show?`<span>${show} of ${list.length}</span><button type="button" data-ckmore="${kind}">Show more</button>`:'';
