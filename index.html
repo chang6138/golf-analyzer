@@ -318,7 +318,7 @@ td select.clubsel{font-size:.8rem}
 <div class="wrap" id="app">
   <header class="top">
     <div class="brand">
-      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v240 · updated Nov 5, 2026</span></span></span>
+      <span class="eyebrow toprow"><span>Garmin R10 · Garmin S72</span><span class="toprt"><span id="appver">v241 · updated Nov 5, 2026</span></span></span>
       <div class="titlerow">
         <div class="h1row">
           <h1>Golf Analyzer<button type="button" class="qhelp hq" id="appq" aria-label="About Golf Analyzer" data-tip="Reads every export in the Golf Data Google Drive folder (R10 and S72). Upload a new CSV there, then press Sync with Drive.">?</button></h1>
@@ -1806,10 +1806,11 @@ function renderSwLog(){
 const BASE_BEFORE='2026-11-03';
 const CKT={ // reason types: [label, excludes the row?]
   missing:['Missing data',1], club:['Doesn’t match club',1], sensor:['Impossible reading',1], linked:['Linked row failed',1], yours:['Excluded by you',1],
-  nobase:['No baseline',0], mishit:['Mishit',0], outlier:['Outlier',0], dupe:['Duplicate',0], relabel:['Club changed',0], nomatch:['No match',0] };
+  noclub:['Missing club data',0], nobase:['No baseline',0], mishit:['Mishit',0], outlier:['Outlier',0], dupe:['Duplicate',0], relabel:['Club changed',0], nomatch:['No match',0] };
 const CK={
   r10:{ title:'Shot Log', unit:'shot',
-    req:[['clubSpeed','club speed'],['attack','attack angle'],['path','club path'],['face','face angle'],['ballSpeed','ball speed'],['launch','launch'],['spin','spin'],['carry','carry']],
+    req:[['ballSpeed','ball speed'],['launch','launch'],['spin','spin'],['carry','carry']],   // ball data is required; missing club data is only flagged
+    soft:[['clubSpeed','club speed'],['attack','attack angle'],['path','club path'],['face','face angle']],
     feat:[['clubSpeed','club speed',2,' mph',1],['ballSpeed','ball speed',2.5,' mph',1],['launch','launch',1.5,'°',1],['spin','spin',350,' rpm',0],['carry','carry',4,' yds',1]],
     rows:()=>S.reviewPool||S.shots, key:s=>s.club+'|'+s.len, keyAll:s=>s.club, name:s=>glabel(s),
     cols:[['t','When','l'],['club','Club','l'],['clubSpeed','Club speed',1,' mph'],['ballSpeed','Ball speed',1,' mph'],['smash','Smash',2],['attack','Attack',1,'°',1],['path','Path',1,'°',1],['face','Face',1,'°',1],['launch','Launch',1,'°'],['spin','Spin',0,' rpm'],['apex','Apex',1,' yds'],['carry','Carry',1,' yds'],['offline','Offline',1,' yds',2]] },
@@ -1836,6 +1837,7 @@ function ckRun(kind){
     const iss=[];
     const miss=C.req.filter(([k])=>ckBlank(r[k])).map(([,l])=>l);
     if(miss.length) iss.push(['missing',`No ${miss.join(', ')}`]);
+    const soft=(C.soft||[]).filter(([k])=>ckBlank(r[k])).map(([,l])=>l); if(soft.length) iss.push(['noclub',`No ${soft.join(', ')} recorded`]);
     if(kind==='r10'){
       if(S.excl[r.id]) iss.push(['yours','Excluded in the R10 Shot Log']);
       if(r.smash!=null&&r.smash>1.55) iss.push(['sensor',`Smash ${fmt(r.smash,2)} is higher than physically possible`]);
@@ -2126,7 +2128,7 @@ const ZH_RULES=[ // whole sentences that carry numbers
 ];
 const ZH_TYPE={'driver':'一號木','fairway wood':'球道木','hybrid':'混合桿','short iron':'短鐵','long iron':'長鐵','wedge':'挖起桿'};
 const ZH_EXACT={ // whole labels (short words that would be unsafe to replace inside sentences)
-  'Shot Log':'擊球紀錄','Swing Log':'揮桿紀錄','Excluded':'已排除','Kept':'保留','Reasons':'原因','Status':'狀態','Missing data':'缺少資料','Doesn’t match club':'與球桿不符','Impossible reading':'不可能的數值','Linked row failed':'對應紀錄未通過','Excluded by you':'已由你排除','No baseline':'沒有基準','Mishit':'擊球失誤','Outlier':'離群值','Club changed':'球桿已更改','No match':'沒有配對',  'Compare to Tour':'與職業巡迴賽比較','Hide Tour':'隱藏巡迴賽','Tour':'巡迴賽',  'Check Impact':'查看擊球瞬間',  'Dark':'深色','Light':'淺色',  'All':'全部',
+  'Shot Log':'擊球紀錄','Swing Log':'揮桿紀錄','Excluded':'已排除','Kept':'保留','Reasons':'原因','Status':'狀態','Missing data':'缺少資料','Doesn’t match club':'與球桿不符','Impossible reading':'不可能的數值','Linked row failed':'對應紀錄未通過','Excluded by you':'已由你排除','No baseline':'沒有基準','Missing club data':'缺少球桿資料','Mishit':'擊球失誤','Outlier':'離群值','Club changed':'球桿已更改','No match':'沒有配對',  'Compare to Tour':'與職業巡迴賽比較','Hide Tour':'隱藏巡迴賽','Tour':'巡迴賽',  'Check Impact':'查看擊球瞬間',  'Dark':'深色','Light':'淺色',  'All':'全部',
   'Up':'向上','Down':'向下','Level':'水平','Low':'偏低','High':'偏高','Normal':'正常','Partial':'部分揮桿','Open':'開放','Closed':'關閉','Square':'正對','Neutral':'中性',
   'Fade':'右曲','Draw':'左曲','Slice':'大右曲','Hook':'大左曲','Straight':'直球','Push':'右推','Pull':'左拉','Full':'全揮','Top':'頂點','Top:':'頂點：','Edit':'編輯','Cancel':'取消',
   'Clear':'清除','Next':'下一頁','Previous':'上一頁','Exclude':'排除','Include':'納入','Dismiss':'略過','to':'至','Club':'球桿','When':'時間','Loaded':'力道','Why':'原因',
